@@ -25,11 +25,6 @@
     "autoload": {
         "psr-4": {
             "Jundayw\\Tokenizer\\": "src/"
-        },
-        "laravel": {
-            "providers": [
-                "Jundayw\\Tokenizer\\TokenizerServiceProvider"
-            ]
         }
     },
     "autoload-dev": {
@@ -40,6 +35,11 @@
     "extra": {
         "branch-alias": {
             "dev-main": "1.x-dev"
+        },
+        "laravel": {
+            "providers": [
+                "Jundayw\\Tokenizer\\TokenizerServiceProvider"
+            ]
         }
     },
     "config": {
