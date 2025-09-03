@@ -25,6 +25,11 @@
     "autoload": {
         "psr-4": {
             "Jundayw\\Tokenizer\\": "src/"
+        },
+        "laravel": {
+            "providers": [
+                "Jundayw\\Tokenizer\\TokenizerServiceProvider"
+            ]
         }
     },
     "autoload-dev": {
