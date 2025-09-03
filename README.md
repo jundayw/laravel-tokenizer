@@ -16,7 +16,6 @@ Designed for SPAs and APIs, it enables flexible, multi-role authentication acros
 <details>
     <summary>Table of Contents</summary>
     <ol>
-        <li><a href="#roadmap">Roadmap</a></li>
         <li><a href="#installation">Installation</a></li>
         <li><a href="#usage">Usage</a></li>
         <li><a href="#contributing">Contributing</a></li>
@@ -24,21 +23,6 @@ Designed for SPAs and APIs, it enables flexible, multi-role authentication acros
         <li><a href="#license">License</a></li>
     </ol>
 </details>
-
-<!-- ROADMAP -->
-
-## Roadmap
-
-- [ ] Feature 1
-- [x] Feature 2
-    - [x] Nested Feature
-- [ ] Feature 3
-    - [ ] Nested Feature
-    - [ ] Nested Feature
-
-See the [GitHub Open Issues] for a full list of proposed features (and known issues).
-
-<p align="right">[<a href="#readme-top">back to top</a>]</p>
 
 <!-- INSTALLATION -->
 
@@ -56,7 +40,31 @@ composer require jundayw/tokenizer
 
 ## Usage
 
+### Publish Resources
 
+Your users can also publish all publishable files defined by your package's service provider using the `--provider` flag:
+
+```shell
+php artisan vendor:publish --provider="Jundayw\Tokenizer\TokenizerServiceProvider"
+```
+
+You may wish to publish only the configuration files:
+
+```shell
+php artisan vendor:publish --tag=tokenizer-config
+```
+
+You may wish to publish only the migration files:
+
+```shell
+php artisan vendor:publish --tag=tokenizer-migrations
+```
+
+### Generating Migrations
+
+```shell
+php artisan migrate --path=database/migrations/2025_06_01_000000_create_auth_token_table.php
+```
 
 <!-- CONTRIBUTING -->
 
