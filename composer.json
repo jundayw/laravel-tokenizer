@@ -1,0 +1,45 @@
+{
+    "name": "jundayw/tokenizer",
+    "description": "Laravel Tokenizer provides a multi-role, multi-scenario authentication system for SPAs and APIs.",
+    "keywords": [
+        "laravel",
+        "tokenizer",
+        "auth",
+        "token",
+        "jwt",
+        "authentication"
+    ],
+    "type": "library",
+    "license": "MIT",
+    "homepage": "https://github.com/jundayw/laravel-tokenizer",
+    "authors": [
+        {
+            "name": "jundayw",
+            "email": "jundayw@126.com"
+        }
+    ],
+    "require": {
+        "php": "^8.0"
+    },
+    "require-dev": {},
+    "autoload": {
+        "psr-4": {
+            "Jundayw\\Tokenizer\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "1.x-dev"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
