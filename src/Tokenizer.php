@@ -11,7 +11,7 @@ final class Tokenizer
      *
      * @var string
      */
-    public static string $tokenModel = AuthToken::class;
+    protected static string $tokenModel = AuthToken::class;
 
     /**
      * Set the token model class name.
