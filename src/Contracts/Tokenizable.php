@@ -14,20 +14,37 @@ interface Tokenizable
     public function tokens(): MorphMany;
 
     /**
-     * Determine if the token has a given scope.
+     * Get the current access token being used by the user.
      *
-     * @param string $scope
-     *
-     * @return bool
+     * @return TokenModel|null
      */
-    public function can(string $scope): bool;
+    public function token(): ?TokenModel;
 
     /**
-     * Determine if the token is missing a given scope.
+     * Determine if the current API token has a given scope.
      *
      * @param string $scope
      *
      * @return bool
      */
-    public function cant(string $scope): bool;
+    public function tokenCan(string $scope): bool;
+
+    /**
+     * Create a new access token for the user.
+     *
+     * @param string $name
+     * @param array  $scopes
+     *
+     * @return Tokenable
+     */
+    public function createToken(string $name, array $scopes = ['*']): Tokenable;
+
+    /**
+     * Set the current access token for the user.
+     *
+     * @param TokenModel $accessToken
+     *
+     * @return static
+     */
+    public function withAccessToken(TokenModel $accessToken): static;
 }
