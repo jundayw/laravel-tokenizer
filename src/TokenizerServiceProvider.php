@@ -6,7 +6,7 @@ use Illuminate\Contracts\Auth\Factory;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\ServiceProvider;
-use Jundayw\Tokenizer\Contracts\TokenModel;
+use Jundayw\Tokenizer\Contracts\Authorizable;
 use Jundayw\Tokenizer\Grants\TokenizerGrant;
 use Jundayw\Tokenizer\Guards\TokenizerGuard;
 use Jundayw\Tokenizer\Middleware\CheckForAnyScope;
@@ -31,8 +31,8 @@ class TokenizerServiceProvider extends ServiceProvider
             $this->mergeConfigFrom(__DIR__ . '/../config/tokenizer.php', 'tokenizer');
         }
 
-        $this->app->bind(TokenModel::class, function ($app) {
-            return $app->make(Tokenizer::tokenModel());
+        $this->app->bind(Authorizable::class, function ($app) {
+            return $app->make(Tokenizer::authorizableModel());
         });
 
         $this->addMiddlewareAlias('scopes', CheckScopes::class);
@@ -144,7 +144,7 @@ class TokenizerServiceProvider extends ServiceProvider
                 $auth,
                 $config,
                 $this->app['request'],
-                $this->app[TokenModel::class]
+                $this->app[Authorizable::class]
             ),
             $this->app['request'],
             $auth->createUserProvider($config['provider'] ?? null),

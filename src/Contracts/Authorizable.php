@@ -4,7 +4,7 @@ namespace Jundayw\Tokenizer\Contracts;
 
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
-interface TokenModel
+interface Authorizable
 {
     /**
      * Get the tokenable model that the access token belongs to.

@@ -4,16 +4,16 @@ namespace Jundayw\Tokenizer;
 
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Jundayw\Tokenizer\Contracts\Tokenable;
-use Jundayw\Tokenizer\Contracts\TokenModel;
+use Jundayw\Tokenizer\Contracts\Authorizable;
 
-trait HasTokenization
+trait HasTokenizable
 {
     /**
      * The current access token for the authentication user.
      *
-     * @var TokenModel|null
+     * @var Authorizable|null
      */
-    protected ?TokenModel $accessToken = null;
+    protected ?Authorizable $accessToken = null;
 
     /**
      * Get the access tokens that belong to model.
@@ -22,15 +22,15 @@ trait HasTokenization
      */
     public function tokens(): MorphMany
     {
-        return $this->morphMany(Tokenizer::tokenModel(), 'tokenable');
+        return $this->morphMany(Tokenizer::authorizableModel(), 'tokenable');
     }
 
     /**
      * Get the current access token being used by the user.
      *
-     * @return TokenModel|null
+     * @return Authorizable|null
      */
-    public function token(): ?TokenModel
+    public function token(): ?Authorizable
     {
         return $this->accessToken;
     }
@@ -57,17 +57,17 @@ trait HasTokenization
      */
     public function createToken(string $name, array $scopes = ['*']): Tokenable
     {
-        return call_user_func(app(Tokenable::class), $this->getKey(), $name, $scopes);
+        return call_user_func(app(Tokenable::class), $this, $name, $scopes);
     }
 
     /**
      * Set the current access token for the user.
      *
-     * @param TokenModel $accessToken
+     * @param Authorizable $accessToken
      *
      * @return static
      */
-    public function withAccessToken(TokenModel $accessToken): static
+    public function withAccessToken(Authorizable $accessToken): static
     {
         $this->accessToken = $accessToken;
 

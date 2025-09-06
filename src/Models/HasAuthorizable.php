@@ -1,10 +1,10 @@
 <?php
 
-namespace Jundayw\Tokenizer;
+namespace Jundayw\Tokenizer\Models;
 
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
-trait TokenModelHelpers
+trait HasAuthorizable
 {
     /**
      * Get the current connection name for the model.

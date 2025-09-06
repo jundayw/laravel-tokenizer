@@ -2,7 +2,7 @@
 
 namespace Jundayw\Tokenizer;
 
-use Jundayw\Tokenizer\Models\AuthToken;
+use Jundayw\Tokenizer\Models\Authorization;
 
 final class Tokenizer
 {
@@ -34,32 +34,32 @@ final class Tokenizer
     }
 
     /**
-     * The token model class name.
+     * The authorizable model class name.
      *
      * @var string
      */
-    protected static string $tokenModel = AuthToken::class;
+    protected static string $authorizableModel = Authorization::class;
 
     /**
-     * Set the token model class name.
+     * Set the authorizable model class name.
      *
-     * @param string $tokenModel
+     * @param string $authorizableModel
      *
      * @return void
      */
-    public static function useTokenModel(string $tokenModel): void
+    public static function useAuthorizableModel(string $authorizableModel): void
     {
-        self::$tokenModel = $tokenModel;
+        self::$authorizableModel = $authorizableModel;
     }
 
     /**
-     * Get the token model class name.
+     * Get the authorizable model class name.
      *
      * @return string
      */
-    public static function tokenModel(): string
+    public static function authorizableModel(): string
     {
-        return self::$tokenModel;
+        return self::$authorizableModel;
     }
 
     /**

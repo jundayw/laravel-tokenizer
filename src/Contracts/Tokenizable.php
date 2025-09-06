@@ -16,9 +16,9 @@ interface Tokenizable
     /**
      * Get the current access token being used by the user.
      *
-     * @return TokenModel|null
+     * @return Authorizable|null
      */
-    public function token(): ?TokenModel;
+    public function token(): ?Authorizable;
 
     /**
      * Determine if the current API token has a given scope.
@@ -42,9 +42,9 @@ interface Tokenizable
     /**
      * Set the current access token for the user.
      *
-     * @param TokenModel $accessToken
+     * @param Authorizable $accessToken
      *
      * @return static
      */
-    public function withAccessToken(TokenModel $accessToken): static;
+    public function withAccessToken(Authorizable $accessToken): static;
 }
