@@ -38,21 +38,41 @@ trait HasAuthorizable
     }
 
     /**
-     * Find a valid token by its plain-text value.
+     * Find a valid access token by its plain-text value.
      *
      *  Loads the related `tokenable` model and ensures the token
-     *  has not yet expired. Returns null if no valid token exists.
+     *  has not yet expired. Returns null if no access token exists.
      *
      * @param string $token
      *
      * @return Authorizable|null
      */
-    public function findToken(string $token): ?Authorizable
+    public function findAccessToken(string $token): ?Authorizable
     {
         return $this->newQuery()
             ->with('tokenable')
             ->where('access_token', $token)
             ->where('access_token_expire_at', '>=', now())
+            ->first();
+    }
+
+    /**
+     * Find a refresh token by its plain-text value.
+     *
+     *  Loads the related `tokenable` model and ensures the token
+     *  has not yet expired. Returns null if no refresh token exists.
+     *
+     * @param string $token
+     *
+     * @return Authorizable|null
+     */
+    public function findRefreshToken(string $token): ?Authorizable
+    {
+        return $this->newQuery()
+            ->with('tokenable')
+            ->where('refresh_token', $token)
+            ->where('refresh_token_available_at', '<=', now())
+            ->where('refresh_token_expire_at', '>=', now())
             ->first();
     }
 
