@@ -39,6 +39,8 @@ abstract class Token implements Tokenable
     abstract public function generateRefreshToken(Authorizable $authorizable, Tokenizable $tokenizable): string;
 
     /**
+     * Get the current access token value.
+     *
      * @return string|null
      */
     public function getAccessToken(): ?string
@@ -47,6 +49,8 @@ abstract class Token implements Tokenable
     }
 
     /**
+     * Get the current refresh token value.
+     *
      * @return string|null
      */
     public function getRefreshToken(): ?string
@@ -55,6 +59,8 @@ abstract class Token implements Tokenable
     }
 
     /**
+     * Get the number of seconds until the access token expires.
+     *
      * @return int
      */
     public function getExpiresIn(): int

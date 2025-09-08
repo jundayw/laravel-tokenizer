@@ -39,7 +39,10 @@
         "laravel": {
             "providers": [
                 "Jundayw\\Tokenizer\\TokenizerServiceProvider"
-            ]
+            ],
+            "aliases": {
+                "Token": "Jundayw\\Tokenizer\\Facades\\Token"
+            }
         }
     },
     "config": {
