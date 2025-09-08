@@ -7,6 +7,7 @@ use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\ServiceProvider;
 use Jundayw\Tokenizer\Contracts\Authorizable;
+use Jundayw\Tokenizer\Contracts\Tokenable;
 use Jundayw\Tokenizer\Grants\TokenizerGrant;
 use Jundayw\Tokenizer\Guards\TokenizerGuard;
 use Jundayw\Tokenizer\Middleware\CheckForAnyScope;
@@ -33,6 +34,9 @@ class TokenizerServiceProvider extends ServiceProvider
 
         $this->app->bind(Authorizable::class, function ($app) {
             return $app->make(Tokenizer::authorizableModel());
+        });
+        $this->app->bind(Tokenable::class, function ($app) {
+            return new Token($app[Authorizable::class]);
         });
 
         $this->addMiddlewareAlias('scopes', CheckScopes::class);
