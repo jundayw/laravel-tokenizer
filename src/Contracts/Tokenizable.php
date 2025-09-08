@@ -7,11 +7,13 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 interface Tokenizable
 {
     /**
-     * Get the access tokens that belong to model.
+     * Set the current access token for the user.
      *
-     * @return MorphMany
+     * @param Authorizable $accessToken
+     *
+     * @return static
      */
-    public function tokens(): MorphMany;
+    public function withAccessToken(Authorizable $accessToken): static;
 
     /**
      * Get the current access token being used by the user.
@@ -30,6 +32,13 @@ interface Tokenizable
     public function tokenCan(string $scope): bool;
 
     /**
+     * Get the access tokens that belong to model.
+     *
+     * @return MorphMany
+     */
+    public function tokens(): MorphMany;
+
+    /**
      * Create a new access token for the user.
      *
      * @param string $name
@@ -39,13 +48,4 @@ interface Tokenizable
      * @return Tokenable
      */
     public function createToken(string $name, string $scene = 'default', array $scopes = []): Tokenable;
-
-    /**
-     * Set the current access token for the user.
-     *
-     * @param Authorizable $accessToken
-     *
-     * @return static
-     */
-    public function withAccessToken(Authorizable $accessToken): static;
 }
