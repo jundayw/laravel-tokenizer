@@ -21,9 +21,9 @@ interface Authorizable
      *
      * @param string $token
      *
-     * @return Authorizable
+     * @return Authorizable|null
      */
-    public function findToken(string $token): Authorizable;
+    public function findToken(string $token): ?Authorizable;
 
     /**
      *  Update the token with the given attributes and return the fresh model.

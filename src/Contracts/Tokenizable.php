@@ -33,11 +33,12 @@ interface Tokenizable
      * Create a new access token for the user.
      *
      * @param string $name
+     * @param string $scene
      * @param array  $scopes
      *
      * @return Tokenable
      */
-    public function createToken(string $name, array $scopes = ['*']): Tokenable;
+    public function createToken(string $name, string $scene = 'default', array $scopes = []): Tokenable;
 
     /**
      * Set the current access token for the user.
