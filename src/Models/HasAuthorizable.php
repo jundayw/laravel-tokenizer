@@ -45,9 +45,9 @@ trait HasAuthorizable
      *
      * @param string $token
      *
-     * @return Authorizable
+     * @return Authorizable|null
      */
-    public function findToken(string $token): Authorizable
+    public function findToken(string $token): ?Authorizable
     {
         return $this->newQuery()
             ->with('tokenable')
