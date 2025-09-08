@@ -14,6 +14,30 @@ interface Authorizable
     public function tokenable(): MorphTo;
 
     /**
+     * Find a valid token by its plain-text value.
+     *
+     *  Loads the related `tokenable` model and ensures the token
+     *  has not yet expired. Returns null if no valid token exists.
+     *
+     * @param string $token
+     *
+     * @return Authorizable
+     */
+    public function findToken(string $token): Authorizable;
+
+    /**
+     *  Update the token with the given attributes and return the fresh model.
+     *
+     *  Persists the changes and reloads the model from the database
+     *  to ensure all attributes are up-to-date.
+     *
+     * @param array<string, mixed> $credentials
+     *
+     * @return Authorizable
+     */
+    public function updateToken(array $credentials = []): Authorizable;
+
+    /**
      * Determine if the token has a given scope.
      *
      * @param string $scope
