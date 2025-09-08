@@ -47,7 +47,7 @@ class TokenizerGrant implements Grant
             return null;
         }
 
-        $accessToken = $this->provider->findToken($token);
+        $accessToken = $this->provider->findAccessToken($token);
 
         if (!$this->isValidAccessToken($accessToken) ||
             !$accessToken->getRelation('tokenable') ||
