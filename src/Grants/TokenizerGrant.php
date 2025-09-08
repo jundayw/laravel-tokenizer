@@ -5,12 +5,12 @@ namespace Jundayw\Tokenizer\Grants;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Factory;
 use Illuminate\Contracts\Auth\UserProvider;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Jundayw\Tokenizer\Contracts\Auth\Grant;
-use Jundayw\Tokenizer\Contracts\Tokenable;
-use Jundayw\Tokenizer\Contracts\TokenModel;
-use Jundayw\Tokenizer\HasTokenization;
+use Jundayw\Tokenizer\Contracts\Authorizable;
+use Jundayw\Tokenizer\Contracts\Tokenizable;
+use Jundayw\Tokenizer\Events\TokenAuthenticated;
+use Jundayw\Tokenizer\HasTokenizable;
 use Jundayw\Tokenizer\Tokenizer;
 
 class TokenizerGrant implements Grant
@@ -19,11 +19,19 @@ class TokenizerGrant implements Grant
         protected Factory $auth,
         protected array $providers,
         protected Request $request,
-        protected Model|TokenModel $tokenModel,
+        protected Authorizable $provider,
     ) {
         //
     }
 
+    /**
+     * Retrieve the authenticated user for the incoming request.
+     *
+     * @param Request      $request
+     * @param UserProvider $provider
+     *
+     * @return Authenticatable|null
+     */
     public function __invoke(Request $request, UserProvider $provider): ?Authenticatable
     {
         foreach (config('tokenizer.guards', []) as $guard) {
@@ -39,7 +47,29 @@ class TokenizerGrant implements Grant
             return null;
         }
 
-        return $provider->retrieveById(1);
+        $accessToken = $this->provider->findToken($token);
+
+        if (!$this->isValidAccessToken($accessToken) ||
+            !$accessToken->getRelation('tokenable') ||
+            !$this->supportsTokens($tokenable = $accessToken->getRelation('tokenable'))) {
+            return null;
+        }
+
+        $tokenable = tap($tokenable, static fn(Tokenizable $tokenable) => $tokenable->withAccessToken($accessToken));
+
+        if (method_exists($accessToken->getConnection(), 'hasModifiedRecords') &&
+            method_exists($accessToken->getConnection(), 'setRecordModificationState')) {
+            tap($accessToken->getConnection()->hasModifiedRecords(), function ($hasModifiedRecords) use ($accessToken) {
+                $accessToken->forceFill(['last_used_at' => now()])->save();
+                $accessToken->getConnection()->setRecordModificationState($hasModifiedRecords);
+            });
+        } else {
+            $accessToken->forceFill(['last_used_at' => now()])->save();
+        }
+
+        event(new TokenAuthenticated($accessToken, $tokenable));
+
+        return $tokenable;
     }
 
     /**
@@ -59,33 +89,19 @@ class TokenizerGrant implements Grant
     }
 
     /**
-     * Determine if the tokenable model supports API tokens.
-     *
-     * @param mixed|null $tokenable
-     *
-     * @return bool
-     */
-    protected function supportsTokens(mixed $tokenable = null): bool
-    {
-        return in_array(HasTokenization::class, class_uses_recursive(
-            get_class($tokenable)
-        ));
-    }
-
-    /**
      * Determine if the provided access token is valid.
      *
-     * @param mixed $accessToken
+     * @param Authorizable|null $accessToken
      *
      * @return bool
      */
-    protected function isValidAccessToken(TokenModel $accessToken = null): bool
+    protected function isValidAccessToken(Authorizable $accessToken = null): bool
     {
-        if (is_null($accessToken) || is_null($accessToken->tokenable)) {
+        if (is_null($accessToken) || is_null($tokenable = $accessToken->getRelation('tokenable'))) {
             return false;
         }
 
-        $isValid = $this->hasValidProvider($accessToken->tokenable);
+        $isValid = $this->hasValidProvider($tokenable);
 
         if (is_callable($accessTokenAuthenticationCallback = Tokenizer::accessTokenAuthenticationCallback())) {
             $isValid = call_user_func($accessTokenAuthenticationCallback, $accessToken, $isValid);
@@ -97,11 +113,11 @@ class TokenizerGrant implements Grant
     /**
      * Determine if the tokenable model matches the provider's model type.
      *
-     * @param Tokenable $tokenable
+     * @param Tokenizable $tokenable
      *
      * @return bool
      */
-    protected function hasValidProvider(Tokenable $tokenable): bool
+    protected function hasValidProvider(Tokenizable $tokenable): bool
     {
         if (is_null($provider = $this->providers['provider'] ?? null)) {
             return true;
@@ -113,25 +129,39 @@ class TokenizerGrant implements Grant
     }
 
     /**
-     * Get the user provider used by the guard.
+     * Determine if the tokenable model supports API tokens.
      *
-     * @return TokenModel
+     * @param Tokenizable $tokenable
+     *
+     * @return bool
      */
-    public function getProvider(): TokenModel
+    protected function supportsTokens(Tokenizable $tokenable): bool
     {
-        return $this->tokenModel;
+        return in_array(HasTokenizable::class, class_uses_recursive(
+            get_class($tokenable)
+        ));
     }
 
     /**
-     * Set the user provider used by the guard.
+     * Get the authorizable model used by the token.
      *
-     * @param TokenModel $tokenModel
+     * @return Authorizable
+     */
+    public function getProvider(): Authorizable
+    {
+        return $this->provider;
+    }
+
+    /**
+     * Set the authorizable model used by the token.
+     *
+     * @param Authorizable $provider
      *
      * @return static
      */
-    public function setProvider(TokenModel $tokenModel): static
+    public function setProvider(Authorizable $provider): static
     {
-        $this->tokenModel = $tokenModel;
+        $this->provider = $provider;
 
         return $this;
     }
