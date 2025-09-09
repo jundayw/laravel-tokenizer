@@ -5,6 +5,7 @@ namespace Jundayw\Tokenizer\Tokens;
 use Firebase\JWT\JWT;
 use Jundayw\Tokenizer\Contracts\Authorizable;
 use Jundayw\Tokenizer\Contracts\Tokenizable;
+use Jundayw\Tokenizer\Tokenizer;
 
 class JsonWebToken extends Token
 {
@@ -68,7 +69,7 @@ class JsonWebToken extends Token
             return $this->config['secret_key'];
         }
 
-        $key = $isPrivate ? $this->config['private_key'] : $this->config['public_key'];
+        $key = Tokenizer::keyPath($isPrivate ? $this->config['private_key'] : $this->config['public_key']);
 
         return is_file($key) ? file_get_contents($key) : $key;
     }

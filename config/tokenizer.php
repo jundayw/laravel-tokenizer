@@ -139,7 +139,7 @@ return [
             |
             */
 
-            'private_key' => env('TOKEN_PRIVATE_KEY', storage_path('token_private_key.pem')),
+            'private_key' => env('TOKEN_PRIVATE_KEY', 'tokenizer-private.key'),
 
             /*
             |--------------------------------------------------------------------------
@@ -156,7 +156,7 @@ return [
             |
             */
 
-            'public_key' => env('TOKEN_PUBLIC_KEY', storage_path('token_public_key.pem')),
+            'public_key' => env('TOKEN_PUBLIC_KEY', 'tokenizer-public.key'),
 
 
             /*

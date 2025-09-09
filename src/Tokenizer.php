@@ -34,6 +34,41 @@ final class Tokenizer
     }
 
     /**
+     * The storage location of the encryption keys.
+     *
+     * @var string
+     */
+    protected static string $keyPath;
+
+    /**
+     * Set the storage location of the encryption keys.
+     *
+     * @param string $path
+     *
+     * @return void
+     */
+    public static function loadKeysFrom(string $path): void
+    {
+        self::$keyPath = $path;
+    }
+
+    /**
+     * The location of the encryption keys.
+     *
+     * @param string $file
+     *
+     * @return string
+     */
+    public static function keyPath(string $file): string
+    {
+        $file = ltrim($file, '/\\');
+
+        return self::$keyPath
+            ? rtrim(self::$keyPath, '/\\') . DIRECTORY_SEPARATOR . $file
+            : storage_path($file);
+    }
+
+    /**
      * The authorizable model class name.
      *
      * @var string
