@@ -114,7 +114,7 @@ class TokenizerServiceProvider extends ServiceProvider
     {
         $this->commands([
             Console\KeysCommand::class,
-            // Console\SecretCommand::class,
+            Console\PurgeCommand::class,
         ]);
     }
 
