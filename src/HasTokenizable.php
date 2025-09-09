@@ -173,14 +173,6 @@ trait HasTokenizable
      */
     public function getJWTCustomClaims(): array
     {
-        return [
-            // 'iss' => $this->getJWTIssuer(),
-            // 'sub' => $this->getJWTIdentifier(),
-            // // 'aud' => $this->abilities(),
-            // // 'exp' => $this->getDateTimeAt(),
-            // // 'nbf' => $this->getDateTimeAt(),
-            // // 'iat' => $this->getDateTimeAt(),
-            // 'jti' => $this->getJWTId(),
-        ];
+        return [];
     }
 }

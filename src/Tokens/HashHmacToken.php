@@ -7,6 +7,13 @@ use Jundayw\Tokenizer\Contracts\Tokenizable;
 
 class HashHmacToken extends Token
 {
+    public function __construct(
+        protected string $algo,
+        protected string $secret
+    ) {
+        //
+    }
+
     /**
      * Generate a new access token.
      *
@@ -20,13 +27,13 @@ class HashHmacToken extends Token
     public function generateAccessToken(Authorizable $authorizable, Tokenizable $tokenizable): string
     {
         $data = json_encode([
+            'jti' => time(),
             'iss' => $authorizable->getAttribute('tokenable_type'),
             'sub' => $authorizable->getAttribute('tokenable_id'),
             'exp' => $authorizable->getAttribute('access_token_expire_at'),
             'iat' => now(),
-            'jti' => time(),
         ], JSON_UNESCAPED_UNICODE);
-        return hash_hmac('sha256', $data, config('tokenizer.secret'));
+        return hash_hmac($this->algo, $data, $this->secret);
     }
 
     /**
@@ -42,13 +49,13 @@ class HashHmacToken extends Token
     public function generateRefreshToken(Authorizable $authorizable, Tokenizable $tokenizable): string
     {
         $data = json_encode([
+            'jti' => time(),
             'iss' => $authorizable->getAttribute('tokenable_type'),
             'sub' => $authorizable->getAttribute('tokenable_id'),
             'exp' => $authorizable->getAttribute('access_token_expire_at'),
             'nbf' => $authorizable->getAttribute('refresh_token_available_at'),
             'iat' => now(),
-            'jti' => time(),
         ], JSON_UNESCAPED_UNICODE);
-        return hash_hmac('sha256', $data, config('tokenizer.secret'));
+        return hash_hmac($this->algo, $data, $this->secret);
     }
 }

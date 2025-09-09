@@ -6,6 +6,7 @@ use Closure;
 use InvalidArgumentException;
 use Jundayw\Tokenizer\Contracts\Tokenable;
 use Jundayw\Tokenizer\Tokens\HashHmacToken;
+use Jundayw\Tokenizer\Tokens\JsonWebToken;
 
 class TokenManager
 {
@@ -17,13 +18,46 @@ class TokenManager
     protected array $customCreators = [];
 
     /**
+     * The array of created "drivers".
+     *
+     * @var array
+     */
+    protected array $drivers = [];
+
+    /**
+     * Get a token driver instance.
+     *
+     * @param string|null $name
+     *
+     * @return Tokenable
+     */
+    public function driver(?string $name = null): Tokenable
+    {
+        $name = $name ?: $this->getDefaultDriver();
+
+        return $this->drivers[$name] ??= $this->resolve($name);
+    }
+
+    /**
      * Get the default authentication driver name.
      *
      * @return string
      */
     public function getDefaultDriver(): string
     {
-        return config('tokenizer.driver') ?? class_basename(HashHmacToken::class);
+        return config('tokenizer.default.driver', 'hash');
+    }
+
+    /**
+     * Get the driver configuration.
+     *
+     * @param string $name
+     *
+     * @return array|null
+     */
+    protected function getConfig(string $name): ?array
+    {
+        return config("tokenizer.drivers.{$name}");
     }
 
     /**
@@ -31,19 +65,55 @@ class TokenManager
      *
      * If no driver name is provided, the default driver will be used.
      *
-     * @param string|null $driver
+     * @param string $driver
      *
      * @return Tokenable
      */
-    public function resolve(string $driver = null): Tokenable
+    protected function resolve(string $driver): Tokenable
     {
-        $driver = $driver ?: $this->getDefaultDriver();
+        $config = $this->getConfig($driver);
 
-        if (is_null($driver) || !array_key_exists($driver, $this->customCreators)) {
+        if (is_null($config)) {
             throw new InvalidArgumentException("Token driver [{$driver}] is not defined.");
         }
 
-        return call_user_func($this->customCreators[$driver], $this);
+        if (array_key_exists($driver, $this->customCreators)) {
+            return call_user_func($this->customCreators[$driver], $config);
+        }
+
+        $driverMethod = 'create' . ucfirst($driver) . 'TokenDriver';
+
+        if (method_exists($this, $driverMethod)) {
+            return call_user_func([$this, $driverMethod], $driver, $config);
+        }
+
+        throw new InvalidArgumentException("Token driver [{$driver}] is not defined.");
+    }
+
+    /**
+     * Create a hash token based token driver.
+     *
+     * @param string $name
+     * @param array  $config
+     *
+     * @return Tokenable
+     */
+    public function createHashTokenDriver(string $name, array $config): Tokenable
+    {
+        return new HashHmacToken($config['algo'] ?? 'sha256', $config['secret_key'] ?? config('app.key'));
+    }
+
+    /**
+     * Create a jwt token based token driver.
+     *
+     * @param string $name
+     * @param array  $config
+     *
+     * @return Tokenable
+     */
+    public function createJwtTokenDriver(string $name, array $config): Tokenable
+    {
+        return new JsonWebToken($config);
     }
 
     /**
@@ -71,6 +141,6 @@ class TokenManager
      */
     public function __call(string $method, array $parameters)
     {
-        return call_user_func_array([$this->resolve(), $method], $parameters);
+        return call_user_func_array([$this->driver(), $method], $parameters);
     }
 }

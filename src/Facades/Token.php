@@ -12,7 +12,7 @@ use Jundayw\Tokenizer\TokenManager;
 
 /**
  * @method static string getDefaultDriver()
- * @method static Tokenable resolve(string $driver = null)
+ * @method static Tokenable driver(string $driver = null)
  * @method static TokenManager extend(string $driver, \Closure $callback)
  * @method static Tokenable buildTokens(Authorizable $authorizable, Tokenizable $tokenizable)
  * @method static Tokenable refreshTokens(string $refreshToken = null)
