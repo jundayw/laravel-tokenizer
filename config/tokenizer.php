@@ -60,6 +60,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Key Storage Path
+    |--------------------------------------------------------------------------
+    |
+    | The base directory where private and public keys are stored. This path
+    | will be prepended to the private_key and public_key file names.
+    | You can also use environment variables to configure this path.
+    |
+    */
+
+    'key_path' => env('TOKEN_KEY_PATH', storage_path('keys')),
+
+    /*
+    |--------------------------------------------------------------------------
     | Token Drivers
     |--------------------------------------------------------------------------
     |
