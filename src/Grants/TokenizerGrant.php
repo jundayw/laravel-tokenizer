@@ -50,8 +50,8 @@ class TokenizerGrant implements Grant
         $accessToken = $this->provider->findAccessToken($token);
 
         if (!$this->isValidAccessToken($accessToken) ||
-            !$accessToken->getRelation('tokenable') ||
-            !$this->supportsTokens($tokenable = $accessToken->getRelation('tokenable'))) {
+            !($tokenable = $accessToken->getRelation('tokenable')) ||
+            !$this->supportsTokens($tokenable)) {
             return null;
         }
 

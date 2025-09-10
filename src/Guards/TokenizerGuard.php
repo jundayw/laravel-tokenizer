@@ -2,6 +2,9 @@
 
 namespace Jundayw\Tokenizer\Guards;
 
+use Illuminate\Auth\Events\Authenticated;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Events\Logout;
 use Illuminate\Auth\GuardHelpers;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Guard;
@@ -9,14 +12,14 @@ use Illuminate\Contracts\Auth\UserProvider;
 use Illuminate\Http\Request;
 use Illuminate\Support\Traits\Macroable;
 use Jundayw\Tokenizer\Contracts\Auth\Grant;
-use Jundayw\Tokenizer\Contracts\Auth\SupportsBasicAuth;
 use Jundayw\Tokenizer\Contracts\Auth\SupportsTokenAuth;
 
-class TokenizerGuard implements Guard, SupportsBasicAuth, SupportsTokenAuth
+class TokenizerGuard implements Guard, SupportsTokenAuth
 {
-    use GuardHelpers, Macroable;
+    use GuardHelpers, TokenAuthHelpers, Macroable;
 
     public function __construct(
+        protected string $name,
         protected Grant $grant,
         protected Request $request,
         UserProvider $provider
@@ -34,13 +37,19 @@ class TokenizerGuard implements Guard, SupportsBasicAuth, SupportsTokenAuth
         // If we've already retrieved the user for the current request we can just
         // return it back immediately. We do not want to fetch the user data on
         // every call to this method because that would be tremendously slow.
-        if (!is_null($this->user)) {
+        if ($this->hasUser()) {
             return $this->user;
         }
 
-        return $this->user = call_user_func(
+        $this->user = call_user_func(
             $this->grant, $this->request, $this->getProvider()
         );
+
+        if ($this->user instanceof Authenticatable) {
+            $this->fireAuthenticatedEvent($this->user);
+        }
+
+        return $this->user;
     }
 
     /**
@@ -52,9 +61,49 @@ class TokenizerGuard implements Guard, SupportsBasicAuth, SupportsTokenAuth
      */
     public function validate(array $credentials = []): bool
     {
-        return !is_null((new static(
-            $this->grant, $credentials['request'], $this->getProvider()
-        ))->user());
+        $user = $this->provider->retrieveByCredentials($credentials);
+
+        if (is_null($user) || $this->guest()) {
+            return false;
+        }
+
+        return $this->user->getAuthIdentifier() === $user->getAuthIdentifier();
+    }
+
+    /**
+     * Fire the authenticated event.
+     *
+     * @param Authenticatable $user
+     *
+     * @return void
+     */
+    protected function fireAuthenticatedEvent(Authenticatable $user): void
+    {
+        event(new Authenticated($this->name, $user));
+    }
+
+    /**
+     * Fire the login event.
+     *
+     * @param Authenticatable $user
+     *
+     * @return void
+     */
+    protected function fireLoginEvent(Authenticatable $user): void
+    {
+        event(new Login($this->name, $user, false));
+    }
+
+    /**
+     * Fire the logout event.
+     *
+     * @param Authenticatable $user
+     *
+     * @return void
+     */
+    protected function fireLogoutEvent(Authenticatable $user): void
+    {
+        event(new Logout($this->name, $user));
     }
 
     /**
