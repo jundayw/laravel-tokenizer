@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Traits\Macroable;
 use Jundayw\Tokenizer\Contracts\Auth\Grant;
 use Jundayw\Tokenizer\Contracts\Auth\SupportsTokenAuth;
+use Jundayw\Tokenizer\Contracts\Tokenizable;
 
 class TokenizerGuard implements Guard, SupportsTokenAuth
 {
@@ -30,9 +31,9 @@ class TokenizerGuard implements Guard, SupportsTokenAuth
     /**
      * Get the currently authenticated user.
      *
-     * @return Authenticatable|null
+     * @return Authenticatable|Tokenizable|null
      */
-    public function user(): ?Authenticatable
+    public function user(): Authenticatable|Tokenizable|null
     {
         // If we've already retrieved the user for the current request we can just
         // return it back immediately. We do not want to fetch the user data on
@@ -61,9 +62,15 @@ class TokenizerGuard implements Guard, SupportsTokenAuth
      */
     public function validate(array $credentials = []): bool
     {
-        $user = $this->provider->retrieveByCredentials($credentials);
+        if ($this->guest()) {
+            return false;
+        }
 
-        if (is_null($user) || $this->guest()) {
+        if (is_null($user = $this->provider->retrieveByCredentials($credentials))) {
+            return false;
+        }
+
+        if (get_class($this->user) !== get_class($user)) {
             return false;
         }
 
