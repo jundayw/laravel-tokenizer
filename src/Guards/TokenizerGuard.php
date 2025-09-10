@@ -62,19 +62,9 @@ class TokenizerGuard implements Guard, SupportsTokenAuth
      */
     public function validate(array $credentials = []): bool
     {
-        if ($this->guest()) {
-            return false;
-        }
-
-        if (is_null($user = $this->provider->retrieveByCredentials($credentials))) {
-            return false;
-        }
-
-        if (get_class($this->user) !== get_class($user)) {
-            return false;
-        }
-
-        return $this->user->getAuthIdentifier() === $user->getAuthIdentifier();
+        return !is_null((new static(
+            $this->callback, $credentials['request'], $this->getProvider()
+        ))->user());
     }
 
     /**
