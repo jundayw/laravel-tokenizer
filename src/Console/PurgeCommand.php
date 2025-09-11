@@ -6,7 +6,6 @@ use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Jundayw\Tokenizer\Contracts\Authorizable;
-use Jundayw\Tokenizer\Models\Authorization;
 use Symfony\Component\Console\Attribute\AsCommand;
 
 #[AsCommand(name: 'tokenizer:purge')]
