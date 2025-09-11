@@ -13,7 +13,7 @@ return new class extends Migration {
      */
     public function getConnection(): ?string
     {
-        return config('tokenizer.connection');
+        return config('tokenizer.database.connection');
     }
 
     /**
@@ -23,7 +23,7 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create(config('tokenizer.table', 'auth_tokens'), function (Blueprint $table) {
+        Schema::create(config('tokenizer.database.table', 'auth_tokens'), function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->string('scene')->default('default')->index('idx_scene_type')->comment('Scene Type');
             $table->morphs('tokenable', 'idx_tokenable');
@@ -48,6 +48,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists(config('tokenizer.table', 'auth_tokens'));
+        Schema::dropIfExists(config('tokenizer.database.table', 'auth_tokens'));
     }
 };

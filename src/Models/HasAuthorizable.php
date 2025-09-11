@@ -14,7 +14,7 @@ trait HasAuthorizable
      */
     public function getConnectionName(): ?string
     {
-        return $this->connection ?? config('tokenizer.connection');
+        return $this->connection ?? config('tokenizer.database.connection');
     }
 
     /**
@@ -24,7 +24,7 @@ trait HasAuthorizable
      */
     public function getTable(): string
     {
-        return $this->table ?? config('tokenizer.table', parent::getTable());
+        return $this->table ?? config('tokenizer.database.table', parent::getTable());
     }
 
     /**

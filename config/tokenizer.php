@@ -208,29 +208,49 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Database Connection
+    | Database Storage Configuration
     |--------------------------------------------------------------------------
     |
-    | Here you may specify which database connection should be used by the
-    | token storage. If left null, the default database connection will
-    | be utilized for storing and retrieving authentication tokens.
+    | Here you may configure how tokens are persisted in your application's
+    | database. This section allows you to define which database connection
+    | should be used and the specific table where all issued tokens will be
+    | stored. By customizing these settings, you can isolate token storage
+    | from your primary application tables if desired.
     |
     */
 
-    'connection' => env('TOKEN_CONNECTION'),
+    'database' => [
 
-    /*
-    |--------------------------------------------------------------------------
-    | Token Storage Table
-    |--------------------------------------------------------------------------
-    |
-    | This option defines the database table used to store authentication
-    | tokens. You may change it to any table name that fits your application's
-    | requirements. The default value is "auth_tokens".
-    |
-    */
+        /*
+        |--------------------------------------------------------------------------
+        | Database Connection
+        |--------------------------------------------------------------------------
+        |
+        | This option specifies the database connection that should be used
+        | to store and manage issued tokens. By default, it falls back to
+        | the application's main database connection if no specific
+        | TOKEN_CONNECTION is defined in the environment file.
+        |
+        |
+        */
 
-    'table' => env('TOKEN_TABLE', 'auth_tokens'),
+        'connection' => env('TOKEN_CONNECTION', env('DB_CONNECTION', 'mysql')),
+
+        /*
+        |--------------------------------------------------------------------------
+        | Token Storage Table
+        |--------------------------------------------------------------------------
+        |
+        | This table is used to persist all generated tokens and their metadata,
+        | including access tokens, refresh tokens, expiration times, and
+        | revocation status. You can change this table name if you want
+        | to store tokens in a custom table.
+        |
+        |
+        */
+
+        'table' => env('TOKEN_TABLE', 'auth_tokens'),
+    ],
 
     /*
     |--------------------------------------------------------------------------
