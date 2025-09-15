@@ -25,11 +25,12 @@ return new class extends Migration {
     {
         Schema::create(config('tokenizer.database.table', 'auth_tokens'), function (Blueprint $table) {
             $table->bigIncrements('id');
+            $table->string('name')->index('idx_name')->comment('Token Name');
             $table->string('scene')->default('default')->index('idx_scene_type')->comment('Scene Type');
             $table->morphs('tokenable', 'idx_tokenable');
-            $table->string('name')->index('idx_name')->comment('Token Name');
-            $table->text('access_token')->fulltext('fti_access_token')->nullable()->comment('Access Token');
-            $table->text('refresh_token')->fulltext('fti_refresh_token')->nullable()->comment('Refresh Token');
+            $table->string('token_driver', 128)->index('idx_token_driver')->nullable()->comment('Token Driver');
+            $table->string('access_token', 128)->index('idx_access_token')->nullable()->comment('Access Token');
+            $table->string('refresh_token', 128)->index('idx_refresh_token')->nullable()->comment('Refresh Token');
             $table->longText('scopes')->comment('Token Scopes');
             $table->timestamp('access_token_expire_at')->index('idx_access_token_expire_at')->comment('Token Expiration Time');
             $table->timestamp('refresh_token_available_at')->index('idx_refresh_token_available_at')->comment('Refresh Token Available Time');
