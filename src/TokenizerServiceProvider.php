@@ -2,13 +2,20 @@
 
 namespace Jundayw\Tokenizer;
 
+use Illuminate\Auth\Events\Logout;
+use Illuminate\Config\Repository;
 use Illuminate\Contracts\Auth\Factory;
 use Illuminate\Contracts\Auth\Guard;
+use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
+use Jundayw\Tokenizer\Contracts\Auth\Grant;
 use Jundayw\Tokenizer\Contracts\Authorizable;
-use Jundayw\Tokenizer\Grants\TokenizerGrant;
+use Jundayw\Tokenizer\Contracts\BlacklistRepository;
+use Jundayw\Tokenizer\Contracts\WhitelistRepository;
 use Jundayw\Tokenizer\Guards\TokenizerGuard;
+use Jundayw\Tokenizer\Listeners\Logouted;
 use Jundayw\Tokenizer\Middleware\CheckForAnyScope;
 use Jundayw\Tokenizer\Middleware\CheckScopes;
 
@@ -31,17 +38,120 @@ class TokenizerServiceProvider extends ServiceProvider
             $this->mergeConfigFrom(__DIR__ . '/../config/tokenizer.php', 'tokenizer');
         }
 
-        $this->app->bind(Authorizable::class, static function ($app) {
+        Tokenizer::loadKeysFrom(config('tokenizer.key_path'));
+
+        $this->registerAuthRepository();
+        $this->registerTokenProvider();
+        $this->registerStorageProvider();
+
+        $this->registerGrantProvider();
+
+        $this->aliasMiddleware([
+            'scopes' => CheckScopes::class,
+            'scope'  => CheckForAnyScope::class,
+        ]);
+    }
+
+    /**
+     * Register the bindings for the Auth repository.
+     *
+     * @return void
+     */
+    protected function registerAuthRepository(): void
+    {
+        $this->app->singleton(Authorizable::class, static function ($app) {
             return $app->make(Tokenizer::authorizableModel());
         });
-        $this->app->singleton(TokenManager::class, static function ($app) {
-            return new TokenManager($app[Authorizable::class]);
+    }
+
+    /**
+     * Register the bindings for the Token provider.
+     *
+     * @return void
+     */
+    protected function registerTokenProvider(): void
+    {
+        $this->app->singleton(TokenManager::class, static fn() => new TokenManager());
+    }
+
+    /**
+     * Register the bindings for the Storage provider.
+     *
+     * @return void
+     */
+    protected function registerStorageProvider(): void
+    {
+        $blacklist = config('cache.stores.blacklist', []);
+        $whitelist = config('cache.stores.whitelist', []);
+        $driver    = config('tokenizer.cache.driver');
+        $default   = config("cache.stores.{$driver}", []);
+        $prefix    = config('tokenizer.cache.prefix');
+        $prefix    = trim($prefix, ':');
+        config([
+            'cache.stores.blacklist' => $blacklist ?: $default + ['prefix' => $prefix . ':blacklist'],
+            'cache.stores.whitelist' => $whitelist ?: $default + ['prefix' => $prefix . ':whitelist'],
+        ]);
+
+        $this->app->singleton(BlacklistRepository::class, static function ($app) {
+            return $app['cache']->store('blacklist');
         });
+        $this->app->singleton(WhitelistRepository::class, static function ($app) {
+            return $app['cache']->store('whitelist');
+        });
+    }
 
-        $this->addMiddlewareAlias('scopes', CheckScopes::class);
-        $this->addMiddlewareAlias('scope', CheckForAnyScope::class);
+    /**
+     * Register the bindings for the grant provider.
+     *
+     * @return void
+     */
+    protected function registerGrantProvider(): void
+    {
+        $this->app->singleton(Grant::class, static function ($app) {
+            return tap(new TokenizerGrant(
+                $app[Authorizable::class],
+                $app[TokenManager::class],
+                $app[BlacklistRepository::class],
+                $app[WhitelistRepository::class],
+                $app['request'],
+            ), static function (Grant $grant) use ($app) {
+                $grant
+                    ->setBlacklistEnabled(config('tokenizer.cache.blacklist_enabled', false))
+                    ->setWhitelistEnabled(config('tokenizer.cache.whitelist_enabled', false));
+                $app->refresh('request', $grant, 'setRequest');
+            });
+        });
+    }
 
-        Tokenizer::loadKeysFrom(config('tokenizer.key_path'));
+    /**
+     * Register the middleware.
+     *
+     * @param array $middlewares
+     *
+     * @return void
+     * @deprecated
+     *
+     */
+    protected function addMiddlewareAlias(array $middlewares = []): void
+    {
+        $router = $this->app['router'];
+        $method = method_exists($router, 'aliasMiddleware') ? 'aliasMiddleware' : 'middleware';
+
+        array_walk($middlewares, static fn(string $class, string $name) => [$router, $method]($name, $class));
+    }
+
+    /**
+     * Register the middleware.
+     *
+     * @param array $middlewares
+     *
+     * @return void
+     */
+    protected function aliasMiddleware(array $middlewares = []): void
+    {
+        array_walk($middlewares, static fn(string $class, string $name, Router $router) => [
+            $router, method_exists($router, 'aliasMiddleware') ? 'aliasMiddleware' : 'middleware',
+        ]($name, $class), $this->app['router']);
     }
 
     /**
@@ -56,25 +166,7 @@ class TokenizerServiceProvider extends ServiceProvider
         }
 
         $this->registerGuard();
-    }
-
-    /**
-     * Register the middleware.
-     *
-     * @param string $name
-     * @param string $class
-     *
-     * @return mixed
-     */
-    protected function addMiddlewareAlias(string $name, string $class): mixed
-    {
-        $router = $this->app['router'];
-
-        if (method_exists($router, 'aliasMiddleware')) {
-            return $router->aliasMiddleware($name, $class);
-        }
-
-        return $router->middleware($name, $class);
+        $this->registerListeners();
     }
 
     /**
@@ -115,6 +207,7 @@ class TokenizerServiceProvider extends ServiceProvider
         $this->commands([
             Console\KeysCommand::class,
             Console\PurgeCommand::class,
+            Console\SecretCommand::class,
         ]);
     }
 
@@ -127,7 +220,7 @@ class TokenizerServiceProvider extends ServiceProvider
     {
         Auth::resolved(function (Factory $auth) {
             $auth->extend('tokenizer', function ($app, string $name, array $config) use ($auth) {
-                return tap($this->makeGuard($auth, $config), function (Guard $guard) {
+                return tap($this->makeGuard($auth, $name, $config), function (Guard $guard) {
                     app()->refresh('request', $guard, 'setRequest');
                 });
             });
@@ -138,21 +231,30 @@ class TokenizerServiceProvider extends ServiceProvider
      * Make an instance of the token guard.
      *
      * @param Factory $auth
+     * @param string  $name
      * @param array   $config
      *
      * @return TokenizerGuard
      */
-    protected function makeGuard(Factory $auth, array $config): TokenizerGuard
+    protected function makeGuard(Factory $auth, string $name, array $config): TokenizerGuard
     {
         return new TokenizerGuard(
-            new TokenizerGrant(
-                $auth,
-                $config,
-                $this->app['request'],
-                $this->app[Authorizable::class]
-            ),
+            $name,
+            new Repository($config),
+            $auth,
+            $this->app[Grant::class],
             $this->app['request'],
             $auth->createUserProvider($config['provider'] ?? null),
         );
+    }
+
+    /**
+     * Registering event listeners
+     *
+     * @return void
+     */
+    protected function registerListeners(): void
+    {
+        Event::listen(Logout::class, Logouted::class);
     }
 }
