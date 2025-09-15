@@ -2,16 +2,16 @@
 
 namespace Jundayw\Tokenizer\Tokens;
 
+use Illuminate\Config\Repository;
 use Jundayw\Tokenizer\Contracts\Authorizable;
 use Jundayw\Tokenizer\Contracts\Tokenizable;
 
 class HashHmacToken extends Token
 {
-    public function __construct(
-        protected string $algo,
-        protected string $secret
-    ) {
-        //
+    public function __construct(string $name, array $config)
+    {
+        $this->name   = $name;
+        $this->config = new Repository($config);
     }
 
     /**
@@ -33,7 +33,7 @@ class HashHmacToken extends Token
             'exp' => $authorizable->getAttribute('access_token_expire_at'),
             'iat' => now(),
         ], JSON_UNESCAPED_UNICODE);
-        return hash_hmac($this->algo, $data, $this->secret);
+        return hash_hmac($this->getConfig()->get('algo'), $data, $this->getConfig()->get('secret'));
     }
 
     /**
@@ -56,6 +56,6 @@ class HashHmacToken extends Token
             'nbf' => $authorizable->getAttribute('refresh_token_available_at'),
             'iat' => now(),
         ], JSON_UNESCAPED_UNICODE);
-        return hash_hmac($this->algo, $data, $this->secret);
+        return hash_hmac($this->getConfig()->get('algo'), $data, $this->getConfig()->get('secret'));
     }
 }

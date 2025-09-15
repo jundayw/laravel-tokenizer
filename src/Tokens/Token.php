@@ -2,6 +2,7 @@
 
 namespace Jundayw\Tokenizer\Tokens;
 
+use Illuminate\Contracts\Config\Repository;
 use Illuminate\Http\Request;
 use Jundayw\Tokenizer\Contracts\Authorizable;
 use Jundayw\Tokenizer\Contracts\Tokenable;
@@ -10,9 +11,69 @@ use Symfony\Component\HttpFoundation\Response;
 
 abstract class Token implements Tokenable
 {
-    protected ?string $accessToken  = null;
-    protected ?string $refreshToken = null;
-    protected int     $expiresIn    = 0;
+    public string        $name;
+    protected Repository $config;
+    protected ?string    $accessToken  = null;
+    protected ?string    $refreshToken = null;
+    protected int        $expiresIn    = 0;
+
+    /**
+     * Get the name of the instance.
+     *
+     * @return string
+     */
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    /**
+     * Set the name of the instance.
+     *
+     * @param string $name
+     *
+     * @return static
+     */
+    public function setName(string $name): static
+    {
+        $this->name = $name;
+        return $this;
+    }
+
+    /**
+     * Get the configuration repository instance.
+     *
+     * @return Repository
+     */
+    public function getConfig(): Repository
+    {
+        return $this->config;
+    }
+
+    /**
+     * Set the configuration repository instance.
+     *
+     * @param Repository $config
+     *
+     * @return static
+     */
+    public function setConfig(Repository $config): static
+    {
+        $this->config = $config;
+        return $this;
+    }
+
+    /**
+     * Validate the token using a validator.
+     *
+     * @param string $token
+     *
+     * @return string|null
+     */
+    public function validate(string $token): ?string
+    {
+        return $token;
+    }
 
     /**
      * Generate a new access token.

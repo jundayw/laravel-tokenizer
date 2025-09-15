@@ -3,16 +3,17 @@
 namespace Jundayw\Tokenizer\Tokens;
 
 use Firebase\JWT\JWT;
+use Illuminate\Config\Repository;
 use Jundayw\Tokenizer\Contracts\Authorizable;
 use Jundayw\Tokenizer\Contracts\Tokenizable;
 use Jundayw\Tokenizer\Tokenizer;
 
 class JsonWebToken extends Token
 {
-    public function __construct(
-        protected array $config,
-    ) {
-        //
+    public function __construct(string $name, array $config)
+    {
+        $this->name   = $name;
+        $this->config = new Repository($config);
     }
 
     /**
@@ -36,7 +37,7 @@ class JsonWebToken extends Token
                 'exp' => $authorizable->getAttribute('access_token_expire_at')->getTimestamp(),
                 'iat' => now()->getTimestamp(),
             ];
-        return JWT::encode($payload, $this->getKeyByAlgorithm(), $this->config['algo']);
+        return JWT::encode($payload, $this->getKeyByAlgorithm(), $this->getConfig()->get('algo'));
     }
 
     /**
@@ -60,16 +61,17 @@ class JsonWebToken extends Token
                 'nbf' => $authorizable->getAttribute('refresh_token_available_at')->getTimestamp(),
                 'iat' => now()->getTimestamp(),
             ];
-        return JWT::encode($payload, $this->getKeyByAlgorithm(), $this->config['algo']);
+        return JWT::encode($payload, $this->getKeyByAlgorithm(), $this->getConfig()->get('algo'));
     }
 
     protected function getKeyByAlgorithm(bool $isPrivate = true): string
     {
-        if (str_starts_with($this->config['algo'], 'H')) {
-            return $this->config['secret_key'];
+        if (str_starts_with($this->getConfig()->get('algo'), 'H')) {
+            return $this->getConfig()->get('secret_key');
         }
 
-        $key = Tokenizer::keyPath($isPrivate ? $this->config['private_key'] : $this->config['public_key']);
+        $file = $isPrivate ? $this->getConfig()->get('private_key') : $this->getConfig()->get('public_key');
+        $key  = Tokenizer::keyPath($file);
 
         return is_file($key) ? file_get_contents($key) : $key;
     }

@@ -2,81 +2,123 @@
 
 namespace Jundayw\Tokenizer\Contracts;
 
+use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Support\Responsable;
 
 interface Tokenable extends Arrayable, Responsable
 {
     /**
-     * Generate a new access token.
-     *
-     * This token is typically short-lived and is used to authenticate API requests.
-     *
-     * @param Authorizable $authorizable
-     * @param Tokenizable  $tokenizable
+     * Get the name of the instance.
      *
      * @return string
      */
-    public function generateAccessToken(Authorizable $authorizable, Tokenizable $tokenizable): string;
+    public function getName(): string;
 
     /**
-     * Generate a new refresh token.
+     * Set the name of the instance.
      *
-     * Refresh tokens are long-lived and used to obtain new access tokens.
+     * @param string $name
      *
-     * @param Authorizable $authorizable
-     * @param Tokenizable  $tokenizable
-     *
-     * @return string
+     * @return static
      */
-    public function generateRefreshToken(Authorizable $authorizable, Tokenizable $tokenizable): string;
+    public function setName(string $name): static;
 
     /**
-     * Get the current access token value.
+     * Get the configuration repository instance.
+     *
+     * @return Repository
+     */
+    public function getConfig(): Repository;
+
+    /**
+     * Set the configuration repository instance.
+     *
+     * @param Repository $config
+     *
+     * @return static
+     */
+    public function setConfig(Repository $config): static;
+
+    /**
+     * Validate the token using a validator.
+     *
+     * @param string $token
      *
      * @return string|null
      */
-    public function getAccessToken(): ?string;
+    public function validate(string $token): ?string;
 
-    /**
-     * Get the current refresh token value.
-     *
-     * @return string|null
-     */
-    public function getRefreshToken(): ?string;
-
-    /**
-     * Get the number of seconds until the access token expires.
-     *
-     * @return int
-     */
-    public function getExpiresIn(): int;
-
-    /**
-     * Build an access token and refresh token pair from given values.
-     *
-     * @param Authorizable $authorizable
-     * @param Tokenizable  $tokenizable
-     *
-     * @return Tokenable
-     */
-    public function buildTokens(Authorizable $authorizable, Tokenizable $tokenizable): Tokenable;
-
-    /**
-     * Refresh the access and refresh tokens using the current refresh token.
-     *
-     * @param string|null $refreshToken
-     *
-     * @return Tokenable
-     */
-    public function refreshTokens(string $refreshToken = null): Tokenable;
-
-    /**
-     * Revoke (invalidate) the both access and refresh tokens by access token.
-     *
-     * @param string|null $accessToken
-     *
-     * @return bool
-     */
-    public function revokeToken(string $accessToken = null): bool;
+    // /**
+    //  * Generate a new access token.
+    //  *
+    //  * This token is typically short-lived and is used to authenticate API requests.
+    //  *
+    //  * @param Authorizable $authorizable
+    //  * @param Tokenizable  $tokenizable
+    //  *
+    //  * @return string
+    //  */
+    // public function generateAccessToken(Authorizable $authorizable, Tokenizable $tokenizable): string;
+    //
+    // /**
+    //  * Generate a new refresh token.
+    //  *
+    //  * Refresh tokens are long-lived and used to obtain new access tokens.
+    //  *
+    //  * @param Authorizable $authorizable
+    //  * @param Tokenizable  $tokenizable
+    //  *
+    //  * @return string
+    //  */
+    // public function generateRefreshToken(Authorizable $authorizable, Tokenizable $tokenizable): string;
+    //
+    // /**
+    //  * Get the current access token value.
+    //  *
+    //  * @return string|null
+    //  */
+    // public function getAccessToken(): ?string;
+    //
+    // /**
+    //  * Get the current refresh token value.
+    //  *
+    //  * @return string|null
+    //  */
+    // public function getRefreshToken(): ?string;
+    //
+    // /**
+    //  * Get the number of seconds until the access token expires.
+    //  *
+    //  * @return int
+    //  */
+    // public function getExpiresIn(): int;
+    //
+    // /**
+    //  * Build an access token and refresh token pair from given values.
+    //  *
+    //  * @param Authorizable $authorizable
+    //  * @param Tokenizable  $tokenizable
+    //  *
+    //  * @return Tokenable
+    //  */
+    // public function buildTokens(Authorizable $authorizable, Tokenizable $tokenizable): Tokenable;
+    //
+    // /**
+    //  * Refresh the access and refresh tokens using the current refresh token.
+    //  *
+    //  * @param string|null $refreshToken
+    //  *
+    //  * @return Tokenable
+    //  */
+    // public function refreshTokens(string $refreshToken = null): Tokenable;
+    //
+    // /**
+    //  * Revoke (invalidate) the both access and refresh tokens by access token.
+    //  *
+    //  * @param string|null $accessToken
+    //  *
+    //  * @return bool
+    //  */
+    // public function revokeToken(string $accessToken = null): bool;
 }
