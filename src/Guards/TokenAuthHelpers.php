@@ -3,7 +3,6 @@
 namespace Jundayw\Tokenizer\Guards;
 
 use Illuminate\Contracts\Auth\Authenticatable;
-use Jundayw\Tokenizer\Contracts\Tokenizable;
 
 trait TokenAuthHelpers
 {
@@ -12,12 +11,12 @@ trait TokenAuthHelpers
      *
      * @param mixed $id
      *
-     * @return Authenticatable|Tokenizable|null
+     * @return static|null
      */
-    public function onceUsingId(mixed $id): Authenticatable|Tokenizable|null
+    public function onceUsingId(mixed $id): static|null
     {
         if (!is_null($user = $this->provider->retrieveById($id))) {
-            return tap($user, fn($user) => $this->setUser($user));
+            return $this->setUser($user);
         }
 
         return null;
@@ -28,12 +27,12 @@ trait TokenAuthHelpers
      *
      * @param array $credentials
      *
-     * @return Authenticatable|Tokenizable|null
+     * @return static|null
      */
-    public function once(array $credentials = []): Authenticatable|Tokenizable|null
+    public function once(array $credentials = []): static|null
     {
         if (!is_null($user = $this->provider->retrieveByCredentials($credentials))) {
-            return tap($user, fn($user) => $this->setUser($user));
+            return $this->setUser($user);
         }
 
         return null;
@@ -44,9 +43,9 @@ trait TokenAuthHelpers
      *
      * @param array $credentials
      *
-     * @return Authenticatable|Tokenizable|null
+     * @return static|null
      */
-    public function attempt(array $credentials = []): Authenticatable|Tokenizable|null
+    public function attempt(array $credentials = []): static|null
     {
         if (!is_null($user = $this->provider->retrieveByCredentials($credentials))) {
             return $this->login($user);
@@ -60,9 +59,9 @@ trait TokenAuthHelpers
      *
      * @param mixed $id
      *
-     * @return Authenticatable|Tokenizable|null
+     * @return static|null
      */
-    public function loginUsingId(mixed $id): Authenticatable|Tokenizable|null
+    public function loginUsingId(mixed $id): static|null
     {
         if (!is_null($user = $this->provider->retrieveById($id))) {
             return $this->login($user);
@@ -76,11 +75,12 @@ trait TokenAuthHelpers
      *
      * @param Authenticatable $user
      *
-     * @return Authenticatable|Tokenizable|null
+     * @return static|null
      */
-    public function login(Authenticatable $user): Authenticatable|Tokenizable|null
+    public function login(Authenticatable $user): static|null
     {
-        return tap($user, fn($user) => $this->setUser($user)->fireLoginEvent($user));
+        $this->setUser($user)->fireLoginEvent($user);
+        return $this;
     }
 
     /**
