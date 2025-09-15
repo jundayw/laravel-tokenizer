@@ -7,8 +7,10 @@ use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Auth\GuardHelpers;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Contracts\Auth\Factory as Auth;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Contracts\Auth\UserProvider;
+use Illuminate\Contracts\Config\Repository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Traits\Macroable;
 use Jundayw\Tokenizer\Contracts\Auth\Grant;
@@ -17,11 +19,13 @@ use Jundayw\Tokenizer\Contracts\Tokenizable;
 
 class TokenizerGuard implements Guard, SupportsTokenAuth
 {
-    use GuardHelpers, TokenAuthHelpers, Macroable;
+    use GuardHelpers, TokenAuthHelpers, Helpers, Macroable;
 
     public function __construct(
         protected string $name,
-        protected Grant $grant,
+        protected Repository $config,
+        protected Auth $auth,
+        public Grant $grant,
         protected Request $request,
         UserProvider $provider
     ) {
@@ -42,15 +46,28 @@ class TokenizerGuard implements Guard, SupportsTokenAuth
             return $this->user;
         }
 
-        $this->user = call_user_func(
-            $this->grant, $this->request, $this->getProvider()
-        );
-
-        if ($this->user instanceof Authenticatable) {
-            $this->fireAuthenticatedEvent($this->user);
+        if (empty($token = $this->grant->getTokenFromRequest($this->getRequest()))) {
+            return null;
         }
 
-        return $this->user;
+        if (is_null($token = $this->grant->getTokenManager()->validate($token))) {
+            return null;
+        }
+
+        $authorizable = $this->grant
+            ->getAuthorizable()
+            ->findAccessToken($token);
+
+        if (!$this->isValidAccessToken($authorizable, $tokenizable = $authorizable->getRelation('tokenable')) ||
+            !$this->supportsTokens($tokenizable)) {
+            return null;
+        }
+
+        $tokenizable = tap($tokenizable, static fn(Tokenizable $tokenizable) => $tokenizable->withAccessToken($authorizable));
+
+        $this->fireAuthenticatedEvent($tokenizable);
+
+        return $this->user = $tokenizable;
     }
 
     /**
@@ -62,9 +79,7 @@ class TokenizerGuard implements Guard, SupportsTokenAuth
      */
     public function validate(array $credentials = []): bool
     {
-        return !is_null((new static(
-            $this->callback, $credentials['request'], $this->getProvider()
-        ))->user());
+        return !is_null($this->attempt($credentials));
     }
 
     /**
@@ -101,6 +116,20 @@ class TokenizerGuard implements Guard, SupportsTokenAuth
     protected function fireLogoutEvent(Authenticatable $user): void
     {
         event(new Logout($this->name, $user));
+    }
+
+    public function getUser(): Authenticatable|Tokenizable|null
+    {
+        if ($this->hasUser()) {
+            return $this->user;
+        }
+
+        return null;
+    }
+
+    public function getRequest(): Request
+    {
+        return $this->request;
     }
 
     /**
