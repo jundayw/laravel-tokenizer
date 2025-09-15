@@ -39,13 +39,37 @@ interface Tokenizable
     public function tokens(): MorphMany;
 
     /**
-     * Create a new access token for the user.
+     * Get the abilities that the user did have.
      *
-     * @param string $name
-     * @param string $scene
-     * @param array  $scopes
-     *
-     * @return Tokenable
+     * @return array
      */
-    public function createToken(string $name, string $scene = 'default', array $scopes = []): Tokenable;
+    public function getScopes(): array;
+
+    /**
+     * Return the identifier for the `sub` claim.
+     *
+     * @return string|int
+     */
+    public function getJWTIdentifier(): int|string;
+
+    /**
+     * Return the issuer for the `iss` claim.
+     *
+     * @return string
+     */
+    public function getJWTIssuer(): string;
+
+    /**
+     * Return the unique token ID for the `jti` claim.
+     *
+     * @return string
+     */
+    public function getJWTId(): string;
+
+    /**
+     * Return a key value array, containing any custom claims to be added to the JWT.
+     *
+     * @return array
+     */
+    public function getJWTCustomClaims(): array;
 }

@@ -2,14 +2,9 @@
 
 namespace Jundayw\Tokenizer;
 
-use DateInterval;
-use DateTime;
-use Exception;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Str;
-use Jundayw\Tokenizer\Contracts\Tokenable;
 use Jundayw\Tokenizer\Contracts\Authorizable;
-use Jundayw\Tokenizer\Facades\Token;
 
 trait HasTokenizable
 {
@@ -67,71 +62,11 @@ trait HasTokenizable
     }
 
     /**
-     * Create a new personal access token for the user.
-     *
-     * @param string $name
-     * @param string $scene
-     * @param array  $scopes
-     *
-     * @return Tokenable
-     */
-    public function createToken(string $name, string $scene = 'default', array $scopes = []): Tokenable
-    {
-        $token = $this->tokens()->make([
-            'scene'                      => $scene,
-            'name'                       => $name,
-            // 'access_token'               => $accessToken,
-            // 'refresh_token'              => $refreshToken,
-            'scopes'                     => $this->getScopes($scopes),
-            'access_token_expire_at'     => $this->getDateTimeAt(config('tokenizer.ttl', 7200)),
-            'refresh_token_available_at' => $this->getDateTimeAt(config('tokenizer.refresh_nbf', 7200)),
-            'refresh_token_expire_at'    => $this->getDateTimeAt(config('tokenizer.refresh_ttl', 'P15D')),
-        ]);
-
-        return Token::buildTokens($token, $this);
-    }
-
-    /**
-     * Return an array of scopes associated with the token.
-     *
-     * @return string[]
-     */
-    final public function getScopes(array $scopes): array
-    {
-        if (in_array('*', $scopes) || in_array('*', $this->abilities())) {
-            return ['*'];
-        }
-
-        return array_merge($scopes, $this->abilities());
-    }
-
-    /**
-     * Get a DateTime object after a specified duration.
-     *
-     * @param string|int $duration ISO 8601 duration string or integer number of seconds
-     * @param int        $default  Default seconds to use if string parsing fails, default is 7200 (2 hours)
-     *
-     * @return DateTime The calculated DateTime object
-     */
-    final public function getDateTimeAt(string|int $duration = 0, int $default = 7200): DateTime
-    {
-        if (is_string($duration)) {
-            try {
-                return now()->add(new DateInterval($duration))->toDateTime();
-            } catch (Exception $e) {
-                return now()->addSeconds($default)->toDateTime();
-            }
-        }
-
-        return now()->addSeconds($duration)->toDateTime();
-    }
-
-    /**
      * Get the abilities that the user did have.
      *
      * @return array
      */
-    public function abilities(): array
+    public function getScopes(): array
     {
         return [];
     }
