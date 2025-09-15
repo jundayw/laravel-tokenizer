@@ -100,7 +100,7 @@ class TokenManager
      */
     public function createHashTokenDriver(string $name, array $config): Tokenable
     {
-        return new HashHmacToken($config['algo'] ?? 'sha256', $config['secret_key'] ?? config('app.key'));
+        return new HashHmacToken($name, $config);
     }
 
     /**
@@ -113,7 +113,7 @@ class TokenManager
      */
     public function createJwtTokenDriver(string $name, array $config): Tokenable
     {
-        return new JsonWebToken($config);
+        return new JsonWebToken($name, $config);
     }
 
     /**
