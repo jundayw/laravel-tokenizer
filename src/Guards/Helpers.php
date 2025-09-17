@@ -3,6 +3,7 @@
 namespace Jundayw\Tokenizer\Guards;
 
 use Illuminate\Contracts\Cache\Repository;
+use Illuminate\Http\Request;
 use Jundayw\Tokenizer\Contracts\Auth\Grant;
 use Jundayw\Tokenizer\Contracts\Authorizable;
 use Jundayw\Tokenizer\Contracts\Tokenable;
@@ -136,6 +137,132 @@ trait Helpers
     }
 
     /**
+     * Get the access token for the current request.
+     *
+     * @param Request $request
+     *
+     * @return string|null
+     */
+    public function getAccessTokenFromRequest(Request $request): ?string
+    {
+        if (is_callable($tokenRetrievalCallback = Tokenizer::tokenRetrievalCallback())) {
+            $token = call_user_func($tokenRetrievalCallback, $request);
+        } else {
+            $token = $request->bearerToken();
+
+            if (empty($token)) {
+                $token = $request->getPassword();
+            }
+
+            if (empty($token)) {
+                $token = $this->getAccessTokenViaCookie($request);
+            }
+        }
+
+        return $this->isValidToken($token) ? $token : null;
+    }
+
+    /**
+     * Get the refresh token for the current request.
+     *
+     * @param Request $request
+     *
+     * @return string|null
+     */
+    public function getRefreshTokenFromRequest(Request $request): ?string
+    {
+        if (is_callable($tokenRetrievalCallback = Tokenizer::tokenRetrievalCallback())) {
+            $token = call_user_func($tokenRetrievalCallback, $request);
+        } else {
+            $token = $request->bearerToken();
+
+            if (empty($token)) {
+                $token = $request->getPassword();
+            }
+
+            if (empty($token)) {
+                $token = $this->getRefreshTokenViaCookie($request);
+            }
+        }
+
+        return $this->isValidToken($token) ? $token : null;
+    }
+
+    /**
+     * Determine if the token is in the correct format.
+     *
+     * @param string|null $token
+     *
+     * @return bool
+     */
+    protected function isValidToken(string $token = null): bool
+    {
+        if (is_null($token)) {
+            return false;
+        }
+
+        if (is_callable($tokenVerificationCallback = Tokenizer::tokenVerificationCallback())) {
+            return call_user_func($tokenVerificationCallback, $token);
+        }
+
+        return true;
+    }
+
+    /**
+     * Get the token cookie via the incoming request.
+     *
+     * @param Request $request
+     *
+     * @return array|string|null
+     */
+    public function getTokenViaCookie(Request $request): array|string|null
+    {
+        $cookie = $request->cookie(Tokenizer::cookie());
+
+        if (is_callable($tokenViaCookieCallback = Tokenizer::tokenViaCookieCallback())) {
+            return call_user_func($tokenViaCookieCallback, $cookie);
+        }
+
+        return $cookie;
+    }
+
+    /**
+     * Get the access token cookie via the incoming request.
+     *
+     * @param Request $request
+     *
+     * @return string|null
+     */
+    public function getAccessTokenViaCookie(Request $request): ?string
+    {
+        $cookie = $this->getTokenViaCookie($request);
+
+        if (is_callable($accessTokenViaCookieCallback = Tokenizer::accessTokenViaCookieCallback())) {
+            return call_user_func($accessTokenViaCookieCallback, $cookie);
+        }
+
+        return $cookie ?? null;
+    }
+
+    /**
+     * Get the refresh token cookie via the incoming request.
+     *
+     * @param Request $request
+     *
+     * @return string|null
+     */
+    public function getRefreshTokenViaCookie(Request $request): ?string
+    {
+        $cookie = $this->getTokenViaCookie($request);
+
+        if (is_callable($refreshTokenViaCookieCallback = Tokenizer::refreshTokenViaCookieCallback())) {
+            return call_user_func($refreshTokenViaCookieCallback, $cookie);
+        }
+
+        return $cookie ?? null;
+    }
+
+    /**
      * Determine if the provided token is valid.
      *
      * @param Authorizable|null $authorizable
@@ -143,7 +270,7 @@ trait Helpers
      *
      * @return bool
      */
-    protected function isValidToken(Authorizable $authorizable = null, Tokenizable $tokenizable = null): bool
+    protected function isValidAuthenticationToken(Authorizable $authorizable = null, Tokenizable $tokenizable = null): bool
     {
         if (is_null($authorizable) || is_null($tokenizable)) {
             return false;

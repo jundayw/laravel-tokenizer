@@ -4,6 +4,7 @@ namespace Jundayw\Tokenizer\Contracts\Auth;
 
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Cache\Repository;
+use Illuminate\Http\Request;
 use Jundayw\Tokenizer\Contracts\Authorizable;
 use Jundayw\Tokenizer\Contracts\Tokenable;
 use Jundayw\Tokenizer\Contracts\Tokenizable;
@@ -69,6 +70,49 @@ interface SupportsTokenAuth
      * @return bool
      */
     public function logout(): bool;
+
+    /**
+     * Get the access token for the current request.
+     *
+     * @param Request $request
+     *
+     * @return string|null
+     */
+    public function getAccessTokenFromRequest(Request $request): ?string;
+
+    /**
+     * Get the refresh token for the current request.
+     *
+     * @param Request $request
+     *
+     * @return string|null
+     */
+    public function getRefreshTokenFromRequest(Request $request): ?string;
+
+    /**
+     * Build an access token and refresh token pair from given values.
+     *
+     * @param string $name
+     * @param string $scene
+     * @param array  $scopes
+     *
+     * @return Tokenable|null
+     */
+    public function createToken(string $name, string $scene = 'default', array $scopes = []): ?Tokenable;
+
+    /**
+     * Revoke (invalidate) the both access and refresh tokens by access token.
+     *
+     * @return bool
+     */
+    public function revokeToken(): bool;
+
+    /**
+     * Refresh the access and refresh tokens using the current refresh token.
+     *
+     * @return Tokenable|null
+     */
+    public function refreshToken(): ?Tokenable;
 
     /**
      * Get the current grant instance.
