@@ -123,14 +123,17 @@ class TokenizerGrant implements Grant
             return null;
         }
 
+        $authorizable->fill([
+            'access_token_expire_at'     => $this->getDateTimeAt(config('tokenizer.ttl', 7200)),
+            'refresh_token_available_at' => $this->getDateTimeAt(config('tokenizer.refresh_nbf', 7200)),
+            'refresh_token_expire_at'    => $this->getDateTimeAt(config('tokenizer.refresh_ttl', 'P15D')),
+        ]);
+
         $tokenable = $this->getTokenable()->buildTokens($authorizable, $tokenable);
         return tap($tokenable, function (Tokenable $tokenable) use ($authorizable) {
             $authorizable->fill([
-                'access_token'               => $tokenable->getAccessToken(),
-                'refresh_token'              => $tokenable->getRefreshToken(),
-                'access_token_expire_at'     => $this->getDateTimeAt(config('tokenizer.ttl', 7200)),
-                'refresh_token_available_at' => $this->getDateTimeAt(config('tokenizer.refresh_nbf', 7200)),
-                'refresh_token_expire_at'    => $this->getDateTimeAt(config('tokenizer.refresh_ttl', 'P15D')),
+                'access_token'  => $tokenable->getAccessToken(),
+                'refresh_token' => $tokenable->getRefreshToken(),
             ])->save();
         });
     }
