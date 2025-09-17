@@ -40,6 +40,8 @@ class TokenizerServiceProvider extends ServiceProvider
 
         Tokenizer::loadKeysFrom(config('tokenizer.key_path'));
 
+        $this->registerTokenViaCookie();
+
         $this->registerAuthRepository();
         $this->registerTokenProvider();
         $this->registerStorageProvider();
@@ -50,6 +52,38 @@ class TokenizerServiceProvider extends ServiceProvider
             'scopes' => CheckScopes::class,
             'scope'  => CheckForAnyScope::class,
         ]);
+    }
+
+    /**
+     * Register the default callbacks for extracting tokens from cookies.
+     *
+     * This method sets up three callbacks in the Tokenizer:
+     *
+     * 1. `tokenViaCookieCallback`:
+     *    - Parses the raw cookie JSON string into an associative array.
+     *    - Returns null if the cookie is empty or invalid.
+     *
+     * 2. `accessTokenViaCookieCallback`:
+     *    - Retrieves the `access_token` value from the decoded cookie array.
+     *    - Returns null if the key does not exist.
+     *
+     * 3. `refreshTokenViaCookieCallback`:
+     *    - Retrieves the `refresh_token` value from the decoded cookie array.
+     *    - Returns null if the key does not exist.
+     *
+     * @return void
+     */
+    protected function registerTokenViaCookie(): void
+    {
+        Tokenizer::useTokenViaCookieCallback(function ($cookie) {
+            try {
+                return json_decode($cookie ?: '', true);
+            } catch (\Throwable $e) {
+                return null;
+            }
+        });
+        Tokenizer::useAccessTokenViaCookieCallback(fn($cookie) => $cookie['access_token'] ?? null);
+        Tokenizer::useRefreshTokenViaCookieCallback(fn($cookie) => $cookie['refresh_token'] ?? null);
     }
 
     /**
