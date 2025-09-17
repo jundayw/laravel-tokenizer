@@ -73,7 +73,7 @@ final class Tokenizer
      *
      * @var string
      */
-    public static string $cookie = 'tokenizer';
+    protected static string $cookie = 'tokenizer';
 
     /**
      * Get or set the name for API token cookies.
@@ -127,56 +127,201 @@ final class Tokenizer
      *
      * @var callable|null
      */
-    protected static $accessTokenRetrievalCallback = null;
+    protected static $tokenRetrievalCallback = null;
 
     /**
-     * Specify a callback that should be used to fetch the access token from the request.
+     * Specify a callback that should be used to fetch the token from the request.
      *
      * @param callable|null $callback
      *
      * @return void
      */
-    public static function useAccessTokenFromRequest(callable $callback = null): void
+    public static function useTokenFromRequest(callable $callback = null): void
     {
-        self::$accessTokenRetrievalCallback = $callback;
+        self::$tokenRetrievalCallback = $callback;
     }
 
     /**
-     * Get the callback used to retrieve the access token from the request.
+     * Get the callback used to retrieve the token from the request.
      *
      * @return callable|null
      */
-    public static function accessTokenRetrievalCallback(): ?callable
+    public static function tokenRetrievalCallback(): ?callable
     {
-        return self::$accessTokenRetrievalCallback;
+        return self::$tokenRetrievalCallback;
     }
 
     /**
-     * A callback that can add to the validation of the access token.
+     * A callback that can add to the validation of the token.
      *
      * @var callable|null
      */
-    protected static $accessTokenAuthenticationCallback = null;
+    protected static $tokenAuthenticationCallback = null;
 
     /**
-     * Specify a callback that should be used to authenticate access tokens.
+     * Specify a callback that should be used to authenticate token.
      *
      * @param callable|null $callback
      *
      * @return void
      */
-    public static function useAuthenticateAccessTokens(callable $callback = null): void
+    public static function useTokenAuthenticationCallback(callable $callback = null): void
     {
-        self::$accessTokenAuthenticationCallback = $callback;
+        self::$tokenAuthenticationCallback = $callback;
     }
 
     /**
-     * Get the callback used to validation the access token.
+     * Get the callback used to validation the token.
      *
      * @return callable|null
      */
-    public static function accessTokenAuthenticationCallback(): ?callable
+    public static function tokenAuthenticationCallback(): ?callable
     {
-        return self::$accessTokenAuthenticationCallback;
+        return self::$tokenAuthenticationCallback;
+    }
+
+    /**
+     * Callback used to perform additional validation on the token format.
+     *
+     * @var callable|null
+     */
+    protected static $tokenVerificationCallback = null;
+
+    /**
+     * Register a callback to be used for token format validation.
+     *
+     * @param callable|null $callback
+     *
+     * @return void
+     */
+    public static function useTokenVerificationCallback(callable $callback = null): void
+    {
+        self::$tokenVerificationCallback = $callback;
+    }
+
+    /**
+     * Retrieve the currently registered token validation callback.
+     *
+     * @return callable|null
+     */
+    public static function tokenVerificationCallback(): ?callable
+    {
+        return self::$tokenVerificationCallback;
+    }
+
+    /**
+     * Callback used to extract a token from a cookie.
+     *
+     * @var callable|null
+     */
+    protected static $tokenViaCookieCallback = null;
+
+    /**
+     * Register a callback to retrieve a token from a cookie.
+     *
+     * @param callable|null $callback
+     *
+     * @return void
+     */
+    public static function useTokenViaCookieCallback(callable $callback = null): void
+    {
+        self::$tokenViaCookieCallback = $callback;
+    }
+
+    /**
+     * Get the currently registered callback for retrieving a token from a cookie.
+     *
+     * @return callable|null
+     */
+    public static function tokenViaCookieCallback(): ?callable
+    {
+        return self::$tokenViaCookieCallback;
+    }
+
+    /**
+     * Callback used to extract the access token from a cookie.
+     *
+     * @var callable|null
+     */
+    protected static $accessTokenViaCookieCallback = null;
+
+    /**
+     * Register a callback to retrieve the access token from a cookie.
+     *
+     * @param callable|null $callback
+     *
+     * @return void
+     */
+    public static function useAccessTokenViaCookieCallback(callable $callback = null): void
+    {
+        self::$accessTokenViaCookieCallback = $callback;
+    }
+
+    /**
+     * Get the currently registered callback for retrieving the access token from a cookie.
+     *
+     * @return callable|null
+     */
+    public static function accessTokenViaCookieCallback(): ?callable
+    {
+        return self::$accessTokenViaCookieCallback;
+    }
+
+    /**
+     * Callback used to extract the refresh token from a cookie.
+     *
+     * @var callable|null
+     */
+    protected static $refreshTokenViaCookieCallback = null;
+
+    /**
+     * Register a callback to retrieve the refresh token from a cookie.
+     *
+     * @param callable|null $callback
+     *
+     * @return void
+     */
+    public static function useRefreshTokenViaCookieCallback(callable $callback = null): void
+    {
+        self::$refreshTokenViaCookieCallback = $callback;
+    }
+
+    /**
+     * Get the currently registered callback for retrieving the refresh token from a cookie.
+     *
+     * @return callable|null
+     */
+    public static function refreshTokenViaCookieCallback(): ?callable
+    {
+        return self::$refreshTokenViaCookieCallback;
+    }
+
+    /**
+     * Callback used to customize token array serialization.
+     *
+     * @var callable|null
+     */
+    protected static $tokenable = null;
+
+    /**
+     * Register a callback to customize token serialization.
+     *
+     * @param callable|null $callback
+     *
+     * @return void
+     */
+    public static function useTokenable(callable $callback = null): void
+    {
+        self::$tokenable = $callback;
+    }
+
+    /**
+     * Get the currently registered callback for token serialization.
+     *
+     * @return callable|null
+     */
+    public static function tokenable(): ?callable
+    {
+        return self::$tokenable;
     }
 }
