@@ -9,11 +9,11 @@ interface Tokenizable
     /**
      * Set the current access token for the user.
      *
-     * @param Authorizable $accessToken
+     * @param Authorizable $authorizable
      *
      * @return static
      */
-    public function withAccessToken(Authorizable $accessToken): static;
+    public function withAccessToken(Authorizable $authorizable): static;
 
     /**
      * Get the current access token being used by the user.

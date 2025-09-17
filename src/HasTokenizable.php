@@ -13,18 +13,18 @@ trait HasTokenizable
      *
      * @var Authorizable|null
      */
-    protected ?Authorizable $accessToken = null;
+    protected ?Authorizable $authorizable = null;
 
     /**
      * Set the current access token for the user.
      *
-     * @param Authorizable $accessToken
+     * @param Authorizable $authorizable
      *
      * @return static
      */
-    public function withAccessToken(Authorizable $accessToken): static
+    public function withAccessToken(Authorizable $authorizable): static
     {
-        $this->accessToken = $accessToken;
+        $this->authorizable = $authorizable;
 
         return $this;
     }
@@ -36,7 +36,7 @@ trait HasTokenizable
      */
     public function token(): ?Authorizable
     {
-        return $this->accessToken;
+        return $this->authorizable;
     }
 
     /**
