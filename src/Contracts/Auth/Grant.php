@@ -5,18 +5,45 @@ namespace Jundayw\Tokenizer\Contracts\Auth;
 use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Http\Request;
 use Jundayw\Tokenizer\Contracts\Authorizable;
+use Jundayw\Tokenizer\Contracts\Tokenable;
+use Jundayw\Tokenizer\Contracts\Tokenizable;
 use Jundayw\Tokenizer\TokenManager;
 
 interface Grant
 {
     /**
-     * Get the token for the current request.
+     * Create a new access token for the user.
      *
-     * @param Request $request
+     * @param string $name
+     * @param string $scene
+     * @param array  $scopes
      *
-     * @return string|null
+     * @return Tokenable|null
      */
-    public function getTokenFromRequest(Request $request): ?string;
+    public function createToken(string $name, string $scene = 'default', array $scopes = []): ?Tokenable;
+
+    /**
+     * Revoke (invalidate) the both access and refresh tokens by access token.
+     *
+     * @return bool
+     */
+    public function revokeToken(): bool;
+
+    /**
+     * Refresh the access and refresh tokens using the current refresh token.
+     *
+     * @return Tokenable|null
+     */
+    public function refreshToken(): ?Tokenable;
+
+    /**
+     * Set the token value from the given string.
+     *
+     * @param string|null $token
+     *
+     * @return string
+     */
+    public function fromString(string $token = null): string;
 
     /**
      * Get the current token value.
@@ -24,15 +51,6 @@ interface Grant
      * @return string|null
      */
     public function getToken(): ?string;
-
-    /**
-     * Set the token value from the given string.
-     *
-     * @param string $token
-     *
-     * @return string
-     */
-    public function fromString(string $token): string;
 
     /**
      * Check if blacklist functionality is enabled.
@@ -81,6 +99,38 @@ interface Grant
      * @return static Returns the current instance for method chaining.
      */
     public function setAuthorizable(Authorizable $authorizable): static;
+
+    /**
+     * Get the Tokenable instance.
+     *
+     * @return Tokenable
+     */
+    public function getTokenable(): Tokenable;
+
+    /**
+     * Set the Tokenable instance.
+     *
+     * @param Tokenable $tokenable
+     *
+     * @return static
+     */
+    public function setTokenable(Tokenable $tokenable): static;
+
+    /**
+     * Get the Tokenizable instance.
+     *
+     * @return Tokenizable|null
+     */
+    public function getTokenizable(): ?Tokenizable;
+
+    /**
+     * Set the Tokenizable instance.
+     *
+     * @param Tokenizable $tokenizable
+     *
+     * @return static
+     */
+    public function setTokenizable(Tokenizable $tokenizable): static;
 
     /**
      * Get the TokenManager instance.
