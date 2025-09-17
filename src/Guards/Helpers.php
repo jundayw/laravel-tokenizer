@@ -13,8 +13,6 @@ use Jundayw\Tokenizer\TokenManager;
 
 trait Helpers
 {
-    protected ?Tokenable $tokenable = null;
-
     /**
      * Get the current grant instance.
      *
@@ -45,10 +43,7 @@ trait Helpers
      */
     public function getTokenable(): Tokenable
     {
-        if (is_null($this->tokenable)) {
-            $this->tokenable = $this->getTokenManager()->driver();
-        }
-        return $this->tokenable;
+        return $this->getGrant()->getTokenable();
     }
 
     /**
@@ -60,7 +55,30 @@ trait Helpers
      */
     public function usingTokenable(?string $name = null): static
     {
-        $this->tokenable = $this->getTokenManager()->driver($name);
+        $this->getGrant()->setTokenable($this->getTokenManager()->driver($name));
+        return $this;
+    }
+
+    /**
+     * Get the tokenizable entity instance.
+     *
+     * @return Tokenizable
+     */
+    public function getTokenizable(): Tokenizable
+    {
+        return $this->getGrant()->getTokenizable();
+    }
+
+    /**
+     * Specify the tokenizable entity to be used.
+     *
+     * @param Tokenizable $tokenizable
+     *
+     * @return static
+     */
+    public function usingTokenizable(Tokenizable $tokenizable): static
+    {
+        $this->getGrant()->setTokenizable($tokenizable);
         return $this;
     }
 
@@ -72,6 +90,19 @@ trait Helpers
     public function getAuthorizable(): Authorizable
     {
         return $this->getGrant()->getAuthorizable();
+    }
+
+    /**
+     * Set the authorizable instance to be used.
+     *
+     * @param Authorizable $authorizable
+     *
+     * @return $this
+     */
+    public function usingAuthorizable(Authorizable $authorizable): static
+    {
+        $this->getGrant()->setAuthorizable($authorizable);
+        return $this;
     }
 
     /**
@@ -105,14 +136,14 @@ trait Helpers
     }
 
     /**
-     * Determine if the provided access token is valid.
+     * Determine if the provided token is valid.
      *
      * @param Authorizable|null $authorizable
      * @param Tokenizable|null  $tokenizable
      *
      * @return bool
      */
-    protected function isValidAccessToken(Authorizable $authorizable = null, Tokenizable $tokenizable = null): bool
+    protected function isValidToken(Authorizable $authorizable = null, Tokenizable $tokenizable = null): bool
     {
         if (is_null($authorizable) || is_null($tokenizable)) {
             return false;
@@ -120,8 +151,8 @@ trait Helpers
 
         $isValid = $this->hasValidProvider($tokenizable);
 
-        if (is_callable($accessTokenAuthenticationCallback = Tokenizer::accessTokenAuthenticationCallback())) {
-            $isValid = call_user_func($accessTokenAuthenticationCallback, $authorizable, $tokenizable, $isValid);
+        if (is_callable($tokenAuthenticationCallback = Tokenizer::tokenAuthenticationCallback())) {
+            $isValid = call_user_func($tokenAuthenticationCallback, $authorizable, $tokenizable, $isValid);
         }
 
         return $isValid;
