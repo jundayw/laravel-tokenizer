@@ -69,6 +69,31 @@ final class Tokenizer
     }
 
     /**
+     * The name for API token cookies.
+     *
+     * @var string
+     */
+    public static string $cookie = 'tokenizer';
+
+    /**
+     * Get or set the name for API token cookies.
+     *
+     * @param string|null $cookie
+     *
+     * @return string|self
+     */
+    public static function cookie(string $cookie = null): self|string
+    {
+        if (is_null($cookie)) {
+            return self::$cookie;
+        }
+
+        self::$cookie = $cookie;
+
+        return new self;
+    }
+
+    /**
      * The authorizable model class name.
      *
      * @var string
