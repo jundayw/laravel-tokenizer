@@ -26,14 +26,13 @@ class HashHmacToken extends Token
      */
     public function generateAccessToken(Authorizable $authorizable, Tokenizable $tokenizable): string
     {
-        $data = json_encode([
-            'jti' => time(),
+        return hash_hmac($this->getConfig()->get('algo'), json_encode([
+            'jti' => $this->ulid(),
             'iss' => $authorizable->getAttribute('tokenable_type'),
             'sub' => $authorizable->getAttribute('tokenable_id'),
             'exp' => $authorizable->getAttribute('access_token_expire_at'),
-            'iat' => now(),
-        ], JSON_UNESCAPED_UNICODE);
-        return hash_hmac($this->getConfig()->get('algo'), $data, $this->getConfig()->get('secret'));
+            'iat' => now()->getTimestamp(),
+        ], JSON_UNESCAPED_UNICODE), $this->getConfig()->get('secret'));
     }
 
     /**
@@ -48,14 +47,25 @@ class HashHmacToken extends Token
      */
     public function generateRefreshToken(Authorizable $authorizable, Tokenizable $tokenizable): string
     {
-        $data = json_encode([
-            'jti' => time(),
+        return hash_hmac($this->getConfig()->get('algo'), json_encode([
+            'jti' => $this->ulid(),
             'iss' => $authorizable->getAttribute('tokenable_type'),
             'sub' => $authorizable->getAttribute('tokenable_id'),
             'exp' => $authorizable->getAttribute('access_token_expire_at'),
             'nbf' => $authorizable->getAttribute('refresh_token_available_at'),
-            'iat' => now(),
-        ], JSON_UNESCAPED_UNICODE);
-        return hash_hmac($this->getConfig()->get('algo'), $data, $this->getConfig()->get('secret'));
+            'iat' => now()->getTimestamp(),
+        ], JSON_UNESCAPED_UNICODE), $this->getConfig()->get('secret'));
+    }
+
+    /**
+     * Validate the token using a validator.
+     *
+     * @param string $token
+     *
+     * @return bool
+     */
+    public function validate(string $token): bool
+    {
+        return true;
     }
 }

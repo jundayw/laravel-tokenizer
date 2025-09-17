@@ -2,11 +2,15 @@
 
 namespace Jundayw\Tokenizer\Tokens;
 
+use Closure;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Jundayw\Tokenizer\Contracts\Authorizable;
 use Jundayw\Tokenizer\Contracts\Tokenable;
 use Jundayw\Tokenizer\Contracts\Tokenizable;
+use Jundayw\Tokenizer\Tokenizer;
+use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Response;
 
 abstract class Token implements Tokenable
@@ -15,7 +19,7 @@ abstract class Token implements Tokenable
     protected Repository $config;
     protected ?string    $accessToken  = null;
     protected ?string    $refreshToken = null;
-    protected int        $expiresIn    = 0;
+    protected string     $expiresIn;
 
     /**
      * Get the name of the instance.
@@ -68,36 +72,9 @@ abstract class Token implements Tokenable
      *
      * @param string $token
      *
-     * @return string|null
+     * @return bool
      */
-    public function validate(string $token): ?string
-    {
-        return $token;
-    }
-
-    /**
-     * Generate a new access token.
-     *
-     * This token is typically short-lived and is used to authenticate API requests.
-     *
-     * @param Authorizable $authorizable
-     * @param Tokenizable  $tokenizable
-     *
-     * @return string
-     */
-    abstract public function generateAccessToken(Authorizable $authorizable, Tokenizable $tokenizable): string;
-
-    /**
-     * Generate a new refresh token.
-     *
-     * Refresh tokens are long-lived and used to obtain new access tokens.
-     *
-     * @param Authorizable $authorizable
-     * @param Tokenizable  $tokenizable
-     *
-     * @return string
-     */
-    abstract public function generateRefreshToken(Authorizable $authorizable, Tokenizable $tokenizable): string;
+    abstract public function validate(string $token): bool;
 
     /**
      * Get the current access token value.
@@ -106,7 +83,20 @@ abstract class Token implements Tokenable
      */
     public function getAccessToken(): ?string
     {
-        return $this->accessToken;
+        return hash('sha256', $this->accessToken);
+    }
+
+    /**
+     * Set the raw access token value before hashing.
+     *
+     * @param string $token
+     *
+     * @return static
+     */
+    public function setAccessToken(string $token): static
+    {
+        $this->accessToken = $token;
+        return $this;
     }
 
     /**
@@ -116,17 +106,60 @@ abstract class Token implements Tokenable
      */
     public function getRefreshToken(): ?string
     {
-        return $this->refreshToken;
+        return hash('sha512', $this->refreshToken);
+    }
+
+    /**
+     * Set the raw refresh token value before hashing.
+     *
+     * @param string $token
+     *
+     * @return static
+     */
+    public function setRefreshToken(string $token): static
+    {
+        $this->refreshToken = $token;
+        return $this;
     }
 
     /**
      * Get the number of seconds until the access token expires.
      *
-     * @return int
+     * @return string
      */
-    public function getExpiresIn(): int
+    public function getExpiresIn(): string
     {
         return $this->expiresIn;
+    }
+
+    /**
+     * Generate a unique access token for the given authorizable and tokenizable.
+     *
+     * @param Authorizable $authorizable
+     * @param Tokenizable  $tokenizable
+     *
+     * @return string
+     */
+    protected function generateUniqueAccessToken(Authorizable $authorizable, Tokenizable $tokenizable): string
+    {
+        return $authorizable->newQuery()
+            ->where('access_token', $token = $this->generateAccessToken($authorizable, $tokenizable))
+            ->exists() ? $this->generateUniqueAccessToken($authorizable, $tokenizable) : $token;
+    }
+
+    /**
+     * Generate a unique refresh token for the given authorizable and tokenizable.
+     *
+     * @param Authorizable $authorizable
+     * @param Tokenizable  $tokenizable
+     *
+     * @return string
+     */
+    protected function generateUniqueRefreshToken(Authorizable $authorizable, Tokenizable $tokenizable): string
+    {
+        return $authorizable->newQuery()
+            ->where('refresh_token', $token = $this->generateRefreshToken($authorizable, $tokenizable))
+            ->exists() ? $this->generateUniqueRefreshToken($authorizable, $tokenizable) : $token;
     }
 
     /**
@@ -139,40 +172,41 @@ abstract class Token implements Tokenable
      */
     public function buildTokens(Authorizable $authorizable, Tokenizable $tokenizable): Tokenable
     {
-        $this->accessToken  = $this->generateAccessToken($authorizable, $tokenizable);
-        $this->refreshToken = $this->generateRefreshToken($authorizable, $tokenizable);
-        $this->expiresIn    = $authorizable->getAttribute('access_token_expire_at')->diffInSeconds(now());
+        $this->accessToken  = $this->generateUniqueAccessToken($authorizable, $tokenizable);
+        $this->refreshToken = $this->generateUniqueRefreshToken($authorizable, $tokenizable);
+        $this->expiresIn    = $authorizable->getAttribute('access_token_expire_at')->toIso8601ZuluString();
 
-        return tap($this, static function (Tokenable $tokenable) use ($authorizable) {
-            $authorizable->fill([
-                'access_token'  => $tokenable->getAccessToken(),
-                'refresh_token' => $tokenable->getRefreshToken(),
-            ])->save();
-        });
-    }
-
-    /**
-     * Refresh the access and refresh tokens using the current refresh token.
-     *
-     * @param string|null $refreshToken
-     *
-     * @return Tokenable
-     */
-    public function refreshTokens(string $refreshToken = null): Tokenable
-    {
         return $this;
     }
 
     /**
-     * Revoke (invalidate) the both access and refresh tokens by access token.
+     * Returns the identifier as a RFC 9562/4122 case-insensitive string.
      *
-     * @param string|null $accessToken
+     * @see     https://datatracker.ietf.org/doc/html/rfc9562/#section-4
      *
-     * @return bool
+     * @example 09748193-048a-4bfb-b825-8528cf74fdc1 (len=36)
+     * @return string
      */
-    public function revokeToken(string $accessToken = null): bool
+    public function ulid(): string
     {
-        return true;
+        return Str::ulid()->toRfc4122();
+    }
+
+    /**
+     * Determine the token type for the current driver.
+     *
+     * If the driver name matches the default driver defined in the
+     * tokenizer configuration, the token type will be returned as
+     * "Bearer". Otherwise, the driver name itself will be used.
+     *
+     * @return string
+     */
+    protected function getTokenType(): string
+    {
+        return with(
+            value: $this->getName() === config('tokenizer.default.driver'),
+            callback: fn(bool $default) => $default ? 'Bearer' : $this->getName()
+        );
     }
 
     /**
@@ -182,12 +216,28 @@ abstract class Token implements Tokenable
      */
     public function toArray(): array
     {
+        if (is_callable($tokenable = Tokenizer::tokenable())) {
+            return Closure::bind($tokenable, $this, static::class)($this);
+        }
+
         return [
-            "access_token"  => $this->getAccessToken(),
-            "token_type"    => class_basename($this),
+            "access_token"  => $this->accessToken,
+            "token_type"    => $this->getTokenType(),
             "expires_in"    => $this->getExpiresIn(),
-            "refresh_token" => $this->getRefreshToken(),
+            "refresh_token" => $this->refreshToken,
         ];
+    }
+
+    /**
+     * Convert the object to its JSON representation.
+     *
+     * @param int $options
+     *
+     * @return string
+     */
+    public function toJson($options = 0): string
+    {
+        return json_encode($this->toArray(), $options);
     }
 
     /**
@@ -199,6 +249,16 @@ abstract class Token implements Tokenable
      */
     public function toResponse($request): Response
     {
-        return response();
+        return response($this->toArray())->withCookie(new Cookie(
+            name: Tokenizer::cookie(),
+            value: $this->toJson(),
+            expire: $this->getExpiresIn(),
+            path: config('session.path'),
+            domain: config('session.domain'),
+            secure: config('session.secure'),
+            httpOnly: true,
+            raw: false,
+            sameSite: config('session.same_site') ?? null
+        ));
     }
 }

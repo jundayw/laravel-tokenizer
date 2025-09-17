@@ -2,11 +2,18 @@
 
 namespace Jundayw\Tokenizer\Tokens;
 
+use DomainException;
+use Firebase\JWT\BeforeValidException;
+use Firebase\JWT\ExpiredException;
 use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
+use Firebase\JWT\SignatureInvalidException;
 use Illuminate\Config\Repository;
+use InvalidArgumentException;
 use Jundayw\Tokenizer\Contracts\Authorizable;
 use Jundayw\Tokenizer\Contracts\Tokenizable;
 use Jundayw\Tokenizer\Tokenizer;
+use UnexpectedValueException;
 
 class JsonWebToken extends Token
 {
@@ -37,6 +44,7 @@ class JsonWebToken extends Token
                 'exp' => $authorizable->getAttribute('access_token_expire_at')->getTimestamp(),
                 'iat' => now()->getTimestamp(),
             ];
+
         return JWT::encode($payload, $this->getKeyByAlgorithm(), $this->getConfig()->get('algo'));
     }
 
@@ -61,6 +69,7 @@ class JsonWebToken extends Token
                 'nbf' => $authorizable->getAttribute('refresh_token_available_at')->getTimestamp(),
                 'iat' => now()->getTimestamp(),
             ];
+
         return JWT::encode($payload, $this->getKeyByAlgorithm(), $this->getConfig()->get('algo'));
     }
 
@@ -74,5 +83,44 @@ class JsonWebToken extends Token
         $key  = Tokenizer::keyPath($file);
 
         return is_file($key) ? file_get_contents($key) : $key;
+    }
+
+    /**
+     * Validate the token using a validator.
+     *
+     * @param string $token
+     *
+     * @return bool
+     */
+    public function validate(string $token): bool
+    {
+        try {
+            JWT::decode($token, new Key(
+                $this->getKeyByAlgorithm(false),
+                $this->getConfig()->get('algo')
+            ));
+            return true;
+        } catch (InvalidArgumentException $e) {
+            // provided key/key-array is empty or malformed.
+        } catch (DomainException $e) {
+            // provided algorithm is unsupported OR
+            // provided key is invalid OR
+            // unknown error thrown in openSSL or libsodium OR
+            // libsodium is required but not available.
+        } catch (SignatureInvalidException $e) {
+            // provided JWT signature verification failed.
+        } catch (BeforeValidException $e) {
+            // provided JWT is trying to be used before "nbf" claim OR
+            // provided JWT is trying to be used before "iat" claim.
+        } catch (ExpiredException $e) {
+            // provided JWT is trying to be used after "exp" claim.
+        } catch (UnexpectedValueException $e) {
+            // provided JWT is malformed OR
+            // provided JWT is missing an algorithm / using an unsupported algorithm OR
+            // provided JWT algorithm does not match provided key OR
+            // provided key ID in key/key-array is empty or invalid.
+        }
+
+        return false;
     }
 }
