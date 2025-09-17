@@ -13,50 +13,49 @@ return [
     */
 
     'default' => [
-
-        'driver' => env('TOKEN_DRIVER', 'hash'),
-
-        /*
-        |--------------------------------------------------------------------------
-        | Access Token Lifetime (TTL)
-        |--------------------------------------------------------------------------
-        |
-        | This value defines the number of seconds an issued access token will
-        | remain valid before expiring. Once expired, the token can no longer
-        | be used to access protected resources.
-        |
-        */
-
-        'ttl' => env('TOKEN_TTL', 7200),
-
-        /*
-        |--------------------------------------------------------------------------
-        | Refresh Token Not-Before Time
-        |--------------------------------------------------------------------------
-        |
-        | This value defines the number of seconds after issuance during which
-        | a refresh token cannot be used. This allows enforcing a minimum wait
-        | time before a client is allowed to request a new access token using
-        | the refresh token.
-        |
-        */
-
-        'refresh_nbf' => env('TOKEN_REFRESH_NBF', 7200),
-
-        /*
-        |--------------------------------------------------------------------------
-        | Refresh Token Lifetime
-        |--------------------------------------------------------------------------
-        |
-        | This value controls the total time-to-live of refresh tokens. It may
-        | be expressed as a relative interval (e.g. "P15D" for 15 days). Once
-        | a refresh token expires, the client must re-authenticate to obtain
-        | new tokens.
-        |
-        */
-
-        'refresh_ttl' => env('TOKEN_REFRESH_TTL', 'P15D'),
+        'driver' => env('TOKEN_DRIVER', 'jwt'),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Access Token Lifetime (TTL)
+    |--------------------------------------------------------------------------
+    |
+    | This value defines the number of seconds an issued access token will
+    | remain valid before expiring. Once expired, the token can no longer
+    | be used to access protected resources.
+    |
+    */
+
+    'ttl' => env('TOKEN_TTL', 7200),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Refresh Token Not-Before Time
+    |--------------------------------------------------------------------------
+    |
+    | This value defines the number of seconds after issuance during which
+    | a refresh token cannot be used. This allows enforcing a minimum wait
+    | time before a client is allowed to request a new access token using
+    | the refresh token.
+    |
+    */
+
+    'refresh_nbf' => env('TOKEN_REFRESH_NBF', 7200),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Refresh Token Lifetime
+    |--------------------------------------------------------------------------
+    |
+    | This value controls the total time-to-live of refresh tokens. It may
+    | be expressed as a relative interval (e.g. "P15D" for 15 days). Once
+    | a refresh token expires, the client must re-authenticate to obtain
+    | new tokens.
+    |
+    */
+
+    'refresh_ttl' => env('TOKEN_REFRESH_TTL', 'P15D'),
 
     /*
     |--------------------------------------------------------------------------
