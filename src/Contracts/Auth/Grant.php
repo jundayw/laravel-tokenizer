@@ -2,11 +2,12 @@
 
 namespace Jundayw\Tokenizer\Contracts\Auth;
 
-use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Http\Request;
 use Jundayw\Tokenizer\Contracts\Authorizable;
+use Jundayw\Tokenizer\Contracts\Blacklist;
 use Jundayw\Tokenizer\Contracts\Tokenable;
 use Jundayw\Tokenizer\Contracts\Tokenizable;
+use Jundayw\Tokenizer\Contracts\Whitelist;
 use Jundayw\Tokenizer\TokenManager;
 
 interface Grant
@@ -151,34 +152,34 @@ interface Grant
     /**
      * Get the blacklist repository.
      *
-     * @return Repository
+     * @return Blacklist
      */
-    public function getBlacklist(): Repository;
+    public function getBlacklist(): Blacklist;
 
     /**
      * Set the blacklist repository.
      *
-     * @param Repository $blacklist
+     * @param Blacklist $blacklist
      *
      * @return static Returns the current instance for method chaining.
      */
-    public function setBlacklist(Repository $blacklist): static;
+    public function setBlacklist(Blacklist $blacklist): static;
 
     /**
      * Get the whitelist repository.
      *
-     * @return Repository
+     * @return Whitelist
      */
-    public function getWhitelist(): Repository;
+    public function getWhitelist(): Whitelist;
 
     /**
      * Set the whitelist repository.
      *
-     * @param Repository $whitelist
+     * @param Whitelist $whitelist
      *
      * @return static Returns the current instance for method chaining.
      */
-    public function setWhitelist(Repository $whitelist): static;
+    public function setWhitelist(Whitelist $whitelist): static;
 
     /**
      * Get the current HTTP request instance.

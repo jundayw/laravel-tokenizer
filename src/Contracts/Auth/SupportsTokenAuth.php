@@ -3,11 +3,12 @@
 namespace Jundayw\Tokenizer\Contracts\Auth;
 
 use Illuminate\Contracts\Auth\Authenticatable;
-use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Http\Request;
 use Jundayw\Tokenizer\Contracts\Authorizable;
+use Jundayw\Tokenizer\Contracts\Blacklist;
 use Jundayw\Tokenizer\Contracts\Tokenable;
 use Jundayw\Tokenizer\Contracts\Tokenizable;
+use Jundayw\Tokenizer\Contracts\Whitelist;
 use Jundayw\Tokenizer\TokenManager;
 
 interface SupportsTokenAuth
@@ -163,14 +164,14 @@ interface SupportsTokenAuth
     /**
      * Get the blacklist repository.
      *
-     * @return Repository
+     * @return Blacklist
      */
-    public function getBlacklist(): Repository;
+    public function getBlacklist(): Blacklist;
 
     /**
      * Get the whitelist repository.
      *
-     * @return Repository
+     * @return Whitelist
      */
-    public function getWhitelist(): Repository;
+    public function getWhitelist(): Whitelist;
 }

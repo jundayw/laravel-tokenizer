@@ -2,7 +2,6 @@
 
 namespace Jundayw\Tokenizer;
 
-use Illuminate\Auth\Events\Logout;
 use Illuminate\Config\Repository;
 use Illuminate\Contracts\Auth\Factory;
 use Illuminate\Contracts\Auth\Guard;
@@ -12,12 +11,14 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Jundayw\Tokenizer\Contracts\Auth\Grant;
 use Jundayw\Tokenizer\Contracts\Authorizable;
-use Jundayw\Tokenizer\Contracts\BlacklistRepository;
-use Jundayw\Tokenizer\Contracts\WhitelistRepository;
+use Jundayw\Tokenizer\Contracts\Blacklist;
+use Jundayw\Tokenizer\Contracts\Whitelist;
+use Jundayw\Tokenizer\Events\TokenAuthenticated;
 use Jundayw\Tokenizer\Guards\TokenizerGuard;
-use Jundayw\Tokenizer\Listeners\Logouted;
 use Jundayw\Tokenizer\Middleware\CheckForAnyScope;
 use Jundayw\Tokenizer\Middleware\CheckScopes;
+use Jundayw\Tokenizer\Repositories\BlacklistRepository;
+use Jundayw\Tokenizer\Repositories\WhitelistRepository;
 
 class TokenizerServiceProvider extends ServiceProvider
 {
@@ -126,11 +127,11 @@ class TokenizerServiceProvider extends ServiceProvider
             'cache.stores.whitelist' => $whitelist ?: $default + ['prefix' => $prefix . ':whitelist'],
         ]);
 
-        $this->app->singleton(BlacklistRepository::class, static function ($app) {
-            return $app['cache']->store('blacklist');
+        $this->app->singleton(Blacklist::class, static function ($app) {
+            return new BlacklistRepository($app['cache']->store('blacklist')->getStore());
         });
-        $this->app->singleton(WhitelistRepository::class, static function ($app) {
-            return $app['cache']->store('whitelist');
+        $this->app->singleton(Whitelist::class, static function ($app) {
+            return new WhitelistRepository($app['cache']->store('whitelist')->getStore());
         });
     }
 
@@ -145,8 +146,8 @@ class TokenizerServiceProvider extends ServiceProvider
             return tap(new TokenizerGrant(
                 $app[Authorizable::class],
                 $app[TokenManager::class],
-                $app[BlacklistRepository::class],
-                $app[WhitelistRepository::class],
+                $app[Blacklist::class],
+                $app[Whitelist::class],
                 $app['request'],
             ), static function (Grant $grant) use ($app) {
                 $grant
@@ -292,6 +293,6 @@ class TokenizerServiceProvider extends ServiceProvider
      */
     protected function registerListeners(): void
     {
-        Event::listen(Logout::class, Logouted::class);
+        Event::listen(TokenAuthenticated::class, Listeners\TokenAuthenticated::class);
     }
 }

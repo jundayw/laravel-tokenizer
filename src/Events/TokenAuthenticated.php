@@ -3,6 +3,7 @@
 namespace Jundayw\Tokenizer\Events;
 
 use Jundayw\Tokenizer\Contracts\Authorizable;
+use Jundayw\Tokenizer\Contracts\Tokenable;
 use Jundayw\Tokenizer\Contracts\Tokenizable;
 
 class TokenAuthenticated
@@ -10,32 +11,44 @@ class TokenAuthenticated
     /**
      * Create a new event instance.
      *
-     * @param Authorizable $token
-     * @param Tokenizable  $tokenable
+     * @param Authorizable $authorizable
+     * @param Tokenizable  $tokenizable
+     * @param Tokenable    $tokenable
      */
     public function __construct(
-        protected readonly Authorizable $token,
-        protected readonly Tokenizable $tokenable
+        protected readonly Authorizable $authorizable,
+        protected readonly Tokenizable $tokenizable,
+        protected readonly Tokenable $tokenable,
     ) {
         //
     }
 
     /**
-     * The access token that was authenticated.
+     * Get the authorizable entity instance.
      *
      * @return Authorizable
      */
-    public function getToken(): Authorizable
+    public function getAuthorizable(): Authorizable
     {
-        return $this->token;
+        return $this->authorizable;
     }
 
     /**
-     * Get the tokenable model that the access token belongs to.
+     * Get the tokenizable entity instance.
      *
      * @return Tokenizable
      */
-    public function getTokenable(): Tokenizable
+    public function getTokenizable(): Tokenizable
+    {
+        return $this->tokenizable;
+    }
+
+    /**
+     * Get the tokenable entity instance.
+     *
+     * @return Tokenable
+     */
+    public function getTokenable(): Tokenable
     {
         return $this->tokenable;
     }

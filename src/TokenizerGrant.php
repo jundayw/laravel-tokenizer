@@ -5,12 +5,16 @@ namespace Jundayw\Tokenizer;
 use DateInterval;
 use DateTime;
 use Exception;
-use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Http\Request;
 use Jundayw\Tokenizer\Contracts\Auth\Grant;
 use Jundayw\Tokenizer\Contracts\Authorizable;
+use Jundayw\Tokenizer\Contracts\Blacklist;
 use Jundayw\Tokenizer\Contracts\Tokenable;
 use Jundayw\Tokenizer\Contracts\Tokenizable;
+use Jundayw\Tokenizer\Contracts\Whitelist;
+use Jundayw\Tokenizer\Events\AccessTokenCreated;
+use Jundayw\Tokenizer\Events\AccessTokenRevoked;
+use Jundayw\Tokenizer\Events\RefreshTokenCreated;
 
 class TokenizerGrant implements Grant
 {
@@ -52,8 +56,8 @@ class TokenizerGrant implements Grant
     public function __construct(
         protected Authorizable $authorizable,
         protected TokenManager $tokenManager,
-        protected Repository $blacklist,
-        protected Repository $whitelist,
+        protected Blacklist $blacklist,
+        protected Whitelist $whitelist,
         protected Request $request,
     ) {
         //
@@ -87,12 +91,14 @@ class TokenizerGrant implements Grant
         ]);
 
         $tokenable = $this->getTokenable()->buildTokens($authorizable, $tokenizable);
-        return tap($tokenable, static function (Tokenable $tokenable) use ($authorizable) {
+        return tap($tokenable, static function (Tokenable $tokenable) use ($authorizable, $tokenizable) {
             $authorizable->fill([
                 'token_driver'  => $tokenable->getName(),
                 'access_token'  => $tokenable->getAccessToken(),
                 'refresh_token' => $tokenable->getRefreshToken(),
             ])->save();
+
+            event(new AccessTokenCreated($authorizable, $tokenizable, $tokenable));
         });
     }
 
@@ -106,7 +112,13 @@ class TokenizerGrant implements Grant
         if (!$this->getAuthorizable()->exists) {
             return false;
         }
-        return $this->getAuthorizable()->delete() ?? false;
+
+        if ($this->getAuthorizable()->delete()) {
+            event(new AccessTokenRevoked($this->getAuthorizable(), $this->getTokenizable(), $this->getTokenable()));
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -130,11 +142,13 @@ class TokenizerGrant implements Grant
         ]);
 
         $tokenable = $this->getTokenable()->buildTokens($authorizable, $tokenable);
-        return tap($tokenable, function (Tokenable $tokenable) use ($authorizable) {
+        return tap($tokenable, function (Tokenable $tokenable) use ($authorizable, $tokenizable) {
             $authorizable->fill([
                 'access_token'  => $tokenable->getAccessToken(),
                 'refresh_token' => $tokenable->getRefreshToken(),
             ])->save();
+
+            event(new RefreshTokenCreated($authorizable, $tokenizable, $tokenable));
         });
     }
 
@@ -336,9 +350,9 @@ class TokenizerGrant implements Grant
     /**
      * Get the blacklist repository.
      *
-     * @return Repository
+     * @return Blacklist
      */
-    public function getBlacklist(): Repository
+    public function getBlacklist(): Blacklist
     {
         return $this->blacklist;
     }
@@ -346,11 +360,11 @@ class TokenizerGrant implements Grant
     /**
      * Set the blacklist repository.
      *
-     * @param Repository $blacklist
+     * @param Blacklist $blacklist
      *
      * @return static Returns the current instance for method chaining.
      */
-    public function setBlacklist(Repository $blacklist): static
+    public function setBlacklist(Blacklist $blacklist): static
     {
         $this->blacklist = $blacklist;
         return $this;
@@ -359,9 +373,9 @@ class TokenizerGrant implements Grant
     /**
      * Get the whitelist repository.
      *
-     * @return Repository
+     * @return Whitelist
      */
-    public function getWhitelist(): Repository
+    public function getWhitelist(): Whitelist
     {
         return $this->whitelist;
     }
@@ -369,11 +383,11 @@ class TokenizerGrant implements Grant
     /**
      * Set the whitelist repository.
      *
-     * @param Repository $whitelist
+     * @param Whitelist $whitelist
      *
      * @return static Returns the current instance for method chaining.
      */
-    public function setWhitelist(Repository $whitelist): static
+    public function setWhitelist(Whitelist $whitelist): static
     {
         $this->whitelist = $whitelist;
         return $this;

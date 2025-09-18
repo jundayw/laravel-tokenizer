@@ -2,12 +2,13 @@
 
 namespace Jundayw\Tokenizer\Guards;
 
-use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Http\Request;
 use Jundayw\Tokenizer\Contracts\Auth\Grant;
 use Jundayw\Tokenizer\Contracts\Authorizable;
+use Jundayw\Tokenizer\Contracts\Blacklist;
 use Jundayw\Tokenizer\Contracts\Tokenable;
 use Jundayw\Tokenizer\Contracts\Tokenizable;
+use Jundayw\Tokenizer\Contracts\Whitelist;
 use Jundayw\Tokenizer\HasTokenizable;
 use Jundayw\Tokenizer\Tokenizer;
 use Jundayw\Tokenizer\TokenManager;
@@ -119,9 +120,9 @@ trait Helpers
     /**
      * Get the blacklist repository.
      *
-     * @return Repository
+     * @return Blacklist
      */
-    public function getBlacklist(): Repository
+    public function getBlacklist(): Blacklist
     {
         return $this->getGrant()->getBlacklist();
     }
@@ -129,9 +130,9 @@ trait Helpers
     /**
      * Get the whitelist repository.
      *
-     * @return Repository
+     * @return Whitelist
      */
-    public function getWhitelist(): Repository
+    public function getWhitelist(): Whitelist
     {
         return $this->getGrant()->getWhitelist();
     }
