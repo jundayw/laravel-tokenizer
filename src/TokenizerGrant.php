@@ -63,20 +63,20 @@ class TokenizerGrant implements Grant
      * Create a new access token for the user.
      *
      * @param string $name
-     * @param string $scene
+     * @param string $platform
      * @param array  $scopes
      *
      * @return Tokenable|null
      */
-    public function createToken(string $name, string $scene = 'default', array $scopes = []): ?Tokenable
+    public function createToken(string $name, string $platform = 'default', array $scopes = []): ?Tokenable
     {
         if (is_null($tokenizable = $this->getTokenizable())) {
             return null;
         }
 
         $authorizable = $tokenizable->tokens()->make([
-            'scene'                      => $scene,
             'name'                       => $name,
+            'platform'                   => $platform,
             // 'access_token'               => $accessToken,
             // 'refresh_token'              => $refreshToken,
             // 'token_driver'               => $tokenDriver,

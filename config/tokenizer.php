@@ -18,6 +18,60 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Token Management
+    |--------------------------------------------------------------------------
+    |
+    | Manage how user authentication tokens are handled across different
+    | platform types. These options define whether users can maintain
+    | concurrent tokens and how multiple tokens per platform type are treated.
+    |
+    */
+
+    'token_management' => [
+
+        /*
+        |--------------------------------------------------------------------------
+        | Enabled
+        |--------------------------------------------------------------------------
+        |
+        | Determines whether token concurrency control is active.
+        | When true, rules that enforce token concurrency limits are applied.
+        |
+        */
+
+        'enabled' => true,
+
+        /*
+        |--------------------------------------------------------------------------
+        | Allow Multiple Platforms
+        |--------------------------------------------------------------------------
+        |
+        | When true, tokens for different platforms (e.g., 'pc', 'mobile', 'app')
+        | can remain valid at the same time.
+        | When false, issuing a new token will invalidate all existing tokens
+        | regardless of platform.
+        |
+        |
+        */
+
+        'allow_multi_platforms' => true,
+
+        /*
+        |--------------------------------------------------------------------------
+        | Multi Platform Tokens
+        |--------------------------------------------------------------------------
+        |
+        | A list of platforms that are allowed to have multiple active tokens
+        | simultaneously for the same user.
+        | Example: ['pc'] allows multiple tokens for PC platforms at the same time.
+        |
+        */
+
+        'multi_platform_tokens' => [],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Access Token Lifetime (TTL)
     |--------------------------------------------------------------------------
     |

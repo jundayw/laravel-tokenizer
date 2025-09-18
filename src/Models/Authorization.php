@@ -5,6 +5,7 @@ namespace Jundayw\Tokenizer\Models;
 use Carbon\CarbonImmutable;
 use DateTimeImmutable;
 use DateTimeInterface;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
@@ -92,5 +93,17 @@ class Authorization extends Model implements Authorizable
         return $date instanceof DateTimeImmutable ?
             CarbonImmutable::instance($date)->toIso8601ZuluString() :
             Carbon::instance($date)->toIso8601ZuluString();
+    }
+
+    /**
+     * Define a getter for the platform property.
+     *
+     * @return Attribute
+     */
+    protected function platform(): Attribute
+    {
+        return new Attribute(
+            set: fn($value, $attributes) => strtolower($value),
+        );
     }
 }

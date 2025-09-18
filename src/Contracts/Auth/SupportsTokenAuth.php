@@ -93,12 +93,12 @@ interface SupportsTokenAuth
      * Build an access token and refresh token pair from given values.
      *
      * @param string $name
-     * @param string $scene
+     * @param string $platform
      * @param array  $scopes
      *
      * @return Tokenable|null
      */
-    public function createToken(string $name, string $scene = 'default', array $scopes = []): ?Tokenable;
+    public function createToken(string $name, string $platform = 'default', array $scopes = []): ?Tokenable;
 
     /**
      * Revoke (invalidate) the both access and refresh tokens by access token.

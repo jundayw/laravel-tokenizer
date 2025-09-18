@@ -272,9 +272,12 @@ class TokenizerServiceProvider extends ServiceProvider
      */
     protected function makeGuard(Factory $auth, string $name, array $config): TokenizerGuard
     {
+        $tokenManagement = config('tokenizer.token_management');
+        $tokenManagement = array_filter($tokenManagement, static fn($key) => !array_key_exists($key, $config), ARRAY_FILTER_USE_KEY);
+
         return new TokenizerGuard(
             $name,
-            new Repository($config),
+            new Repository($config + $tokenManagement),
             $auth,
             $this->app[Grant::class],
             $this->app['request'],

@@ -26,7 +26,7 @@ return new class extends Migration {
         Schema::create(config('tokenizer.database.table', 'auth_tokens'), function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->string('name')->index('idx_name')->comment('Token Name');
-            $table->string('scene')->default('default')->index('idx_scene_type')->comment('Scene Type');
+            $table->string('platform')->default('default')->index('idx_platform')->comment('Platform Type');
             $table->morphs('tokenable', 'idx_tokenable');
             $table->string('token_driver', 128)->index('idx_token_driver')->nullable()->comment('Token Driver');
             $table->string('access_token', 128)->index('idx_access_token')->nullable()->comment('Access Token');
@@ -35,7 +35,6 @@ return new class extends Migration {
             $table->timestamp('access_token_expire_at')->index('idx_access_token_expire_at')->comment('Token Expiration Time');
             $table->timestamp('refresh_token_available_at')->index('idx_refresh_token_available_at')->comment('Refresh Token Available Time');
             $table->timestamp('refresh_token_expire_at')->index('idx_refresh_token_expire_at')->comment('Refresh Token Expiration Time');
-            $table->timestamp('last_used_at')->nullable()->comment('Last Used Time');
             $table->timestamp('created_at')->nullable()->comment('Created Time');
             $table->timestamp('updated_at')->nullable()->comment('Updated Time');
             $table->timestamp('deleted_at')->index('idx_deleted_at')->nullable()->comment('Deleted Time');

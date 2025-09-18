@@ -86,17 +86,17 @@ class TokenizerGuard implements Guard, SupportsTokenAuth
      * Build an access token and refresh token pair from given values.
      *
      * @param string $name
-     * @param string $scene
+     * @param string $platform
      * @param array  $scopes
      *
      * @return Tokenable|null
      */
-    public function createToken(string $name, string $scene = 'default', array $scopes = []): ?Tokenable
+    public function createToken(string $name, string $platform = 'default', array $scopes = []): ?Tokenable
     {
         if (is_null($this->getUser())) {
             return null;
         }
-        return $this->getGrant()->createToken($name, $scene, $scopes);
+        return $this->getGrant()->createToken($name, $platform, $scopes);
     }
 
     /**
