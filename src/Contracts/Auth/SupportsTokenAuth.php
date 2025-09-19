@@ -91,6 +91,33 @@ interface SupportsTokenAuth
     public function getRefreshTokenFromRequest(Request $request): ?string;
 
     /**
+     * Get the token cookie via the incoming request.
+     *
+     * @param Request $request
+     *
+     * @return array|string|null
+     */
+    public function getTokenViaCookie(Request $request): array|string|null;
+
+    /**
+     * Get the access token cookie via the incoming request.
+     *
+     * @param Request $request
+     *
+     * @return string|null
+     */
+    public function getAccessTokenViaCookie(Request $request): ?string;
+
+    /**
+     * Get the refresh token cookie via the incoming request.
+     *
+     * @param Request $request
+     *
+     * @return string|null
+     */
+    public function getRefreshTokenViaCookie(Request $request): ?string;
+
+    /**
      * Build an access token and refresh token pair from given values.
      *
      * @param string $name
