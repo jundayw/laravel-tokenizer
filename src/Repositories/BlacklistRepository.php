@@ -34,6 +34,7 @@ class BlacklistRepository extends Repository implements Blacklist
     public function setBlacklistEnabled(bool $blacklistEnabled): static
     {
         $this->blacklistEnabled = $blacklistEnabled;
+
         return $this;
     }
 }

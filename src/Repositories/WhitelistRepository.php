@@ -34,6 +34,7 @@ class WhitelistRepository extends Repository implements Whitelist
     public function setWhitelistEnabled(bool $whitelistEnabled): static
     {
         $this->whitelistEnabled = $whitelistEnabled;
+
         return $this;
     }
 }

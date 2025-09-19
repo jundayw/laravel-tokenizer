@@ -18,11 +18,20 @@ class AccessTokenCreated extends AccessTokenEvent
         parent::__construct($authorizable, $tokenizable, $tokenable);
     }
 
-    public function getConfig(string $key = null, $default = null): mixed
+    /**
+     * Get the configuration repository instance.
+     *
+     * @param string|null $key
+     * @param mixed       $default
+     *
+     * @return mixed
+     */
+    public function getConfig(string $key = null, mixed $default = null): mixed
     {
         if (is_null($key)) {
             return $this->config;
         }
+
         return $this->config->get($key, $default);
     }
 }

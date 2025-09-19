@@ -4,7 +4,6 @@ namespace Jundayw\Tokenizer\Tokens;
 
 use Closure;
 use Illuminate\Contracts\Config\Repository;
-use Illuminate\Support\Facades\Cookie as CookieJar;
 use Illuminate\Support\Str;
 use Jundayw\Tokenizer\Contracts\Authorizable;
 use Jundayw\Tokenizer\Contracts\Tokenable;
@@ -245,6 +244,7 @@ abstract class Token implements Tokenable
     public function withCookie(Cookie $cookie = null): static
     {
         app('cookie')->queue($cookie ?? $this->getCookie());
+
         return $this;
     }
 
