@@ -13,6 +13,7 @@ use Jundayw\Tokenizer\Contracts\Tokenable;
 use Jundayw\Tokenizer\Contracts\Tokenizable;
 use Jundayw\Tokenizer\Contracts\Whitelist;
 use Jundayw\Tokenizer\Events\AccessTokenCreated;
+use Jundayw\Tokenizer\Events\AccessTokenRefreshing;
 use Jundayw\Tokenizer\Events\AccessTokenRevoked;
 use Jundayw\Tokenizer\Events\AccessTokenRefreshed;
 
@@ -129,9 +130,9 @@ class TokenizerGrant implements Grant
     public function refreshToken(): ?Tokenable
     {
         $authorizable = $this->getAuthorizable();
-        $tokenable    = $this->getTokenizable();
+        $tokenizable  = $this->getTokenizable();
 
-        if (!$this->getAuthorizable()->exists || is_null($tokenable)) {
+        if (!$this->getAuthorizable()->exists || is_null($tokenizable)) {
             return null;
         }
 
@@ -141,8 +142,11 @@ class TokenizerGrant implements Grant
             'refresh_token_expire_at'    => $this->getDateTimeAt(config('tokenizer.refresh_ttl', 'P15D')),
         ]);
 
-        $tokenable = $this->getTokenable()->buildTokens($authorizable, $tokenable);
+        $tokenable = $this->getTokenable()->buildTokens($authorizable, $tokenizable);
+        
         return tap($tokenable, function (Tokenable $tokenable) use ($authorizable, $tokenizable) {
+            event(new AccessTokenRefreshing($authorizable, $tokenizable, $tokenable));
+
             $authorizable->fill([
                 'access_token'  => $tokenable->getAccessToken(),
                 'refresh_token' => $tokenable->getRefreshToken(),
