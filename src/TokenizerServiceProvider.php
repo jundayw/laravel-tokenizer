@@ -304,7 +304,6 @@ class TokenizerServiceProvider extends ServiceProvider
     {
         Event::listen(AccessTokenCreated::class, Listeners\TokenManagementListener::class);
         Event::listen(AccessTokenCreated::class, Listeners\AddTokenToWhitelist::class);
-        Event::listen(AccessTokenCreated::class, Listeners\AddTokenToWhitelist::class);
         Event::listen(AccessTokenRevoked::class, Listeners\RemoveTokenFromWhitelist::class);
         Event::listen(AccessTokenRevoked::class, Listeners\AddTokenToBlacklist::class);
         Event::listen(AccessTokenRefreshing::class, Listeners\RemoveTokenFromWhitelist::class);

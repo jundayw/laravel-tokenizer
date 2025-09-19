@@ -5,20 +5,11 @@ namespace Jundayw\Tokenizer\Listeners;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Jundayw\Tokenizer\Contracts\Authorizable;
-use Jundayw\Tokenizer\Contracts\Blacklist;
-use Jundayw\Tokenizer\Contracts\Whitelist;
 use Jundayw\Tokenizer\Events\AccessTokenCreated;
 use Jundayw\Tokenizer\Events\AccessTokenRevoked;
 
 class TokenManagementListener extends ShouldQueueable
 {
-    public function __construct(
-        protected Blacklist $blacklist,
-        protected Whitelist $whitelist,
-    ) {
-        //
-    }
-
     /**
      * @inheritdoc
      *
@@ -45,7 +36,7 @@ class TokenManagementListener extends ShouldQueueable
             }, static function (Builder $builder) {
                 return $builder->whereKeyNot($builder->getModel());
             })
-            ->chunkById(10, static fn(Collection $collection, $a) => $collection->each(function (Authorizable $authorizable) use ($event, $a) {
+            ->chunkById(10, static fn(Collection $collection) => $collection->each(function (Authorizable $authorizable) use ($event) {
                 if ($authorizable->delete()) {
                     event(new AccessTokenRevoked($authorizable, $authorizable->getRelation('tokenable'), $event->getTokenable()));
                 }
