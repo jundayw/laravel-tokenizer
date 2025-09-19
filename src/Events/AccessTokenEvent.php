@@ -2,12 +2,15 @@
 
 namespace Jundayw\Tokenizer\Events;
 
+use Illuminate\Queue\SerializesModels;
 use Jundayw\Tokenizer\Contracts\Authorizable;
 use Jundayw\Tokenizer\Contracts\Tokenable;
 use Jundayw\Tokenizer\Contracts\Tokenizable;
 
 class AccessTokenEvent
 {
+    use SerializesModels;
+
     /**
      * Create a new event instance.
      *
@@ -16,9 +19,9 @@ class AccessTokenEvent
      * @param Tokenable    $tokenable
      */
     public function __construct(
-        protected readonly Authorizable $authorizable,
-        protected readonly Tokenizable $tokenizable,
-        protected readonly Tokenable $tokenable,
+        protected Authorizable $authorizable,
+        protected Tokenizable $tokenizable,
+        protected Tokenable $tokenable,
     ) {
         //
     }
