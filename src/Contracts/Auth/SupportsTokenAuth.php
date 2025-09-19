@@ -3,13 +3,10 @@
 namespace Jundayw\Tokenizer\Contracts\Auth;
 
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Contracts\Config\Repository;
 use Illuminate\Http\Request;
-use Jundayw\Tokenizer\Contracts\Authorizable;
-use Jundayw\Tokenizer\Contracts\Blacklist;
 use Jundayw\Tokenizer\Contracts\Tokenable;
 use Jundayw\Tokenizer\Contracts\Tokenizable;
-use Jundayw\Tokenizer\Contracts\Whitelist;
-use Jundayw\Tokenizer\TokenManager;
 
 interface SupportsTokenAuth
 {
@@ -71,6 +68,13 @@ interface SupportsTokenAuth
      * @return bool
      */
     public function logout(): bool;
+
+    /**
+     * Get the configuration repository instance.
+     *
+     * @return Repository
+     */
+    public function getConfig(): Repository;
 
     /**
      * Get the access token for the current request.
@@ -156,49 +160,5 @@ interface SupportsTokenAuth
      *
      * @return static
      */
-    public function usingGrant(Grant $grant): static;
-
-    /**
-     * Get the tokenable entity instance.
-     *
-     * @return Tokenable
-     */
-    public function getTokenable(): Tokenable;
-
-    /**
-     * Specify the tokenable entity to be used.
-     *
-     * @param string|null $name
-     *
-     * @return static
-     */
-    public function usingTokenable(?string $name = null): static;
-
-    /**
-     * Get the Authorizable instance associated with this object.
-     *
-     * @return Authorizable
-     */
-    public function getAuthorizable(): Authorizable;
-
-    /**
-     * Get the TokenManager instance.
-     *
-     * @return TokenManager
-     */
-    public function getTokenManager(): TokenManager;
-
-    /**
-     * Get the blacklist repository.
-     *
-     * @return Blacklist
-     */
-    public function getBlacklist(): Blacklist;
-
-    /**
-     * Get the whitelist repository.
-     *
-     * @return Whitelist
-     */
-    public function getWhitelist(): Whitelist;
+    public function setGrant(Grant $grant): static;
 }

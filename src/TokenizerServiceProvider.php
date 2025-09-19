@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Jundayw\Tokenizer\Contracts\Auth\Grant;
+use Jundayw\Tokenizer\Contracts\Auth\SupportsTokenAuth;
 use Jundayw\Tokenizer\Contracts\Authorizable;
 use Jundayw\Tokenizer\Contracts\Blacklist;
 use Jundayw\Tokenizer\Contracts\Whitelist;
@@ -159,9 +160,8 @@ class TokenizerServiceProvider extends ServiceProvider
                 $app[TokenManager::class],
                 $app[Blacklist::class],
                 $app[Whitelist::class],
-                $app['request'],
             ), static function (Grant $grant) use ($app) {
-                $app->refresh('request', $grant, 'setRequest');
+                $app->afterResolving(TokenizerGuard::class, fn($guard) => $grant->usingGuard($guard));
             });
         });
     }
@@ -263,7 +263,8 @@ class TokenizerServiceProvider extends ServiceProvider
     {
         Auth::resolved(function (Factory $auth) {
             $auth->extend('tokenizer', function ($app, string $name, array $config) use ($auth) {
-                return tap($this->makeGuard($auth, $name, $config), function (Guard $guard) {
+                return tap($this->makeGuard($auth, $name, $config), function (Guard|SupportsTokenAuth $guard) {
+                    $guard->getGrant()->usingGuard($guard);
                     app()->refresh('request', $guard, 'setRequest');
                 });
             });
@@ -284,14 +285,14 @@ class TokenizerServiceProvider extends ServiceProvider
         $tokenManagement = config('tokenizer.token_management');
         $tokenManagement = array_filter($tokenManagement, static fn($key) => !array_key_exists($key, $config), ARRAY_FILTER_USE_KEY);
 
-        return new TokenizerGuard(
-            $name,
-            new Repository($config + $tokenManagement),
-            $auth,
-            $this->app[Grant::class],
-            $this->app['request'],
-            $auth->createUserProvider($config['provider'] ?? null),
-        );
+        return app(TokenizerGuard::class, [
+            'name'     => $name,
+            'config'   => new Repository($config + $tokenManagement),
+            'auth'     => $auth,
+            'grant'    => $this->app[Grant::class],
+            'request'  => $this->app['request'],
+            'provider' => $auth->createUserProvider($config['provider'] ?? null),
+        ]);
     }
 
     /**
@@ -301,6 +302,8 @@ class TokenizerServiceProvider extends ServiceProvider
      */
     protected function registerListeners(): void
     {
+        Event::listen(AccessTokenCreated::class, Listeners\TokenManagementListener::class);
+        Event::listen(AccessTokenCreated::class, Listeners\AddTokenToWhitelist::class);
         Event::listen(AccessTokenCreated::class, Listeners\AddTokenToWhitelist::class);
         Event::listen(AccessTokenRevoked::class, Listeners\RemoveTokenFromWhitelist::class);
         Event::listen(AccessTokenRevoked::class, Listeners\AddTokenToBlacklist::class);

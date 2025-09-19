@@ -26,7 +26,7 @@ class TokenizerGuard implements Guard, SupportsTokenAuth
         protected string $name,
         protected Repository $config,
         protected Auth $auth,
-        public Grant $grant,
+        protected Grant $grant,
         protected Request $request,
         UserProvider $provider
     ) {
@@ -51,7 +51,7 @@ class TokenizerGuard implements Guard, SupportsTokenAuth
             return null;
         }
 
-        $token = $this->getTokenable()->setAccessToken($token)->getAccessToken();
+        $token = $this->getGrant()->getTokenable()->setAccessToken($token)->getAccessToken();
 
         $authorizable = $this->getGrant()
             ->getAuthorizable()
@@ -65,7 +65,8 @@ class TokenizerGuard implements Guard, SupportsTokenAuth
 
         $tokenizable = tap($tokenizable, static fn(Tokenizable $tokenizable) => $tokenizable->withAccessToken($authorizable));
 
-        $this->usingAuthorizable($authorizable)->fireAuthenticatedEvent($tokenizable);
+        $this->getGrant()->setAuthorizable($authorizable);
+        $this->fireAuthenticatedEvent($tokenizable);
 
         return $this->setUser($tokenizable)->user;
     }
@@ -123,7 +124,7 @@ class TokenizerGuard implements Guard, SupportsTokenAuth
             return null;
         }
 
-        $token = $this->getTokenable()->setRefreshToken($token)->getRefreshToken();
+        $token = $this->getGrant()->getTokenable()->setRefreshToken($token)->getRefreshToken();
 
         $authorizable = $this->getGrant()
             ->getAuthorizable()
@@ -135,7 +136,8 @@ class TokenizerGuard implements Guard, SupportsTokenAuth
             return null;
         }
 
-        $this->usingTokenizable($tokenizable)->usingAuthorizable($authorizable)->fireAuthenticatedEvent($tokenizable);
+        $this->getGrant()->setAuthorizable($authorizable)->usingTokenizable($tokenizable);
+        $this->fireAuthenticatedEvent($tokenizable);
 
         return $this->getGrant()->refreshToken();
     }
@@ -199,9 +201,33 @@ class TokenizerGuard implements Guard, SupportsTokenAuth
      */
     public function setUser(Authenticatable $user): static
     {
-        $this->user = $user;
+        $this->getGrant()->usingTokenizable($this->user = $user);
 
-        return $this->usingTokenizable($this->user);
+        return $this;
+    }
+
+    /**
+     * Get the current grant instance.
+     *
+     * @return Grant
+     */
+    public function getGrant(): Grant
+    {
+        return $this->grant;
+    }
+
+    /**
+     * Set the grant instance to be used.
+     *
+     * @param Grant $grant
+     *
+     * @return static
+     */
+    public function setGrant(Grant $grant): static
+    {
+        $this->grant = $grant;
+
+        return $this;
     }
 
     /**

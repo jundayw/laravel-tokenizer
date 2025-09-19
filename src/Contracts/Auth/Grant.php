@@ -2,7 +2,6 @@
 
 namespace Jundayw\Tokenizer\Contracts\Auth;
 
-use Illuminate\Http\Request;
 use Jundayw\Tokenizer\Contracts\Authorizable;
 use Jundayw\Tokenizer\Contracts\Blacklist;
 use Jundayw\Tokenizer\Contracts\Tokenable;
@@ -54,20 +53,20 @@ interface Grant
     public function getToken(): ?string;
 
     /**
-     * Get the Authorizable instance associated with this object.
+     * Get the current guard instance.
      *
-     * @return Authorizable
+     * @return SupportsTokenAuth
      */
-    public function getAuthorizable(): Authorizable;
+    public function getGuard(): SupportsTokenAuth;
 
     /**
-     * Set the Authorizable instance.
+     * Set the guard instance to be used.
      *
-     * @param Authorizable $authorizable
+     * @param SupportsTokenAuth $guard
      *
-     * @return static Returns the current instance for method chaining.
+     * @return static
      */
-    public function setAuthorizable(Authorizable $authorizable): static;
+    public function usingGuard(SupportsTokenAuth $guard): static;
 
     /**
      * Get the Tokenable instance.
@@ -83,7 +82,7 @@ interface Grant
      *
      * @return static
      */
-    public function setTokenable(Tokenable|string $tokenable = null): static;
+    public function usingTokenable(Tokenable|string $tokenable = null): static;
 
     /**
      * Get the Tokenizable instance.
@@ -99,7 +98,23 @@ interface Grant
      *
      * @return static
      */
-    public function setTokenizable(Tokenizable $tokenizable): static;
+    public function usingTokenizable(Tokenizable $tokenizable): static;
+
+    /**
+     * Get the Authorizable instance associated with this object.
+     *
+     * @return Authorizable
+     */
+    public function getAuthorizable(): Authorizable;
+
+    /**
+     * Set the Authorizable instance.
+     *
+     * @param Authorizable $authorizable
+     *
+     * @return static Returns the current instance for method chaining.
+     */
+    public function setAuthorizable(Authorizable $authorizable): static;
 
     /**
      * Get the TokenManager instance.
@@ -148,20 +163,4 @@ interface Grant
      * @return static Returns the current instance for method chaining.
      */
     public function setWhitelist(Whitelist $whitelist): static;
-
-    /**
-     * Get the current HTTP request instance.
-     *
-     * @return Request
-     */
-    public function getRequest(): Request;
-
-    /**
-     * Set the current HTTP request instance.
-     *
-     * @param Request $request
-     *
-     * @return static Returns the current instance for method chaining.
-     */
-    public function setRequest(Request $request): static;
 }

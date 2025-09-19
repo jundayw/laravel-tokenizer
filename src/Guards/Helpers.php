@@ -2,139 +2,23 @@
 
 namespace Jundayw\Tokenizer\Guards;
 
+use Illuminate\Contracts\Config\Repository;
 use Illuminate\Http\Request;
-use Jundayw\Tokenizer\Contracts\Auth\Grant;
 use Jundayw\Tokenizer\Contracts\Authorizable;
-use Jundayw\Tokenizer\Contracts\Blacklist;
-use Jundayw\Tokenizer\Contracts\Tokenable;
 use Jundayw\Tokenizer\Contracts\Tokenizable;
-use Jundayw\Tokenizer\Contracts\Whitelist;
 use Jundayw\Tokenizer\HasTokenizable;
 use Jundayw\Tokenizer\Tokenizer;
-use Jundayw\Tokenizer\TokenManager;
 
 trait Helpers
 {
     /**
-     * Get the current grant instance.
+     * Get the configuration repository instance.
      *
-     * @return Grant
+     * @return Repository
      */
-    public function getGrant(): Grant
+    public function getConfig(): Repository
     {
-        return $this->grant;
-    }
-
-    /**
-     * Set the grant instance to be used.
-     *
-     * @param Grant $grant
-     *
-     * @return static
-     */
-    public function usingGrant(Grant $grant): static
-    {
-        $this->grant = $grant;
-        return $this;
-    }
-
-    /**
-     * Get the tokenable entity instance.
-     *
-     * @return Tokenable
-     */
-    public function getTokenable(): Tokenable
-    {
-        return $this->getGrant()->getTokenable();
-    }
-
-    /**
-     * Specify the tokenable entity to be used.
-     *
-     * @param string|null $name
-     *
-     * @return static
-     */
-    public function usingTokenable(?string $name = null): static
-    {
-        $this->getGrant()->setTokenable($this->getTokenManager()->driver($name));
-        return $this;
-    }
-
-    /**
-     * Get the tokenizable entity instance.
-     *
-     * @return Tokenizable
-     */
-    public function getTokenizable(): Tokenizable
-    {
-        return $this->getGrant()->getTokenizable();
-    }
-
-    /**
-     * Specify the tokenizable entity to be used.
-     *
-     * @param Tokenizable $tokenizable
-     *
-     * @return static
-     */
-    public function usingTokenizable(Tokenizable $tokenizable): static
-    {
-        $this->getGrant()->setTokenizable($tokenizable);
-        return $this;
-    }
-
-    /**
-     * Get the Authorizable instance associated with this object.
-     *
-     * @return Authorizable
-     */
-    public function getAuthorizable(): Authorizable
-    {
-        return $this->getGrant()->getAuthorizable();
-    }
-
-    /**
-     * Set the authorizable instance to be used.
-     *
-     * @param Authorizable $authorizable
-     *
-     * @return $this
-     */
-    public function usingAuthorizable(Authorizable $authorizable): static
-    {
-        $this->getGrant()->setAuthorizable($authorizable);
-        return $this;
-    }
-
-    /**
-     * Get the TokenManager instance.
-     *
-     * @return TokenManager
-     */
-    public function getTokenManager(): TokenManager
-    {
-        return $this->getGrant()->getTokenManager();
-    }
-
-    /**
-     * Get the blacklist repository.
-     *
-     * @return Blacklist
-     */
-    public function getBlacklist(): Blacklist
-    {
-        return $this->getGrant()->getBlacklist();
-    }
-
-    /**
-     * Get the whitelist repository.
-     *
-     * @return Whitelist
-     */
-    public function getWhitelist(): Whitelist
-    {
-        return $this->getGrant()->getWhitelist();
+        return $this->config;
     }
 
     /**

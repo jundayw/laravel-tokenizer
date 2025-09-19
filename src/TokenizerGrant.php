@@ -5,8 +5,8 @@ namespace Jundayw\Tokenizer;
 use DateInterval;
 use DateTime;
 use Exception;
-use Illuminate\Http\Request;
 use Jundayw\Tokenizer\Contracts\Auth\Grant;
+use Jundayw\Tokenizer\Contracts\Auth\SupportsTokenAuth;
 use Jundayw\Tokenizer\Contracts\Authorizable;
 use Jundayw\Tokenizer\Contracts\Blacklist;
 use Jundayw\Tokenizer\Contracts\Tokenable;
@@ -27,6 +27,13 @@ class TokenizerGrant implements Grant
     protected ?string $token = null;
 
     /**
+     * The Guard instance.
+     *
+     * @var SupportsTokenAuth
+     */
+    protected SupportsTokenAuth $guard;
+
+    /**
      * The Tokenable instance.
      *
      * @var Tokenable|null
@@ -45,7 +52,6 @@ class TokenizerGrant implements Grant
         protected TokenManager $tokenManager,
         protected Blacklist $blacklist,
         protected Whitelist $whitelist,
-        protected Request $request,
     ) {
         //
     }
@@ -65,26 +71,26 @@ class TokenizerGrant implements Grant
             return null;
         }
 
+        $ttl          = config('tokenizer.ttl', 7200);
+        $refreshNbf   = config('tokenizer.refresh_nbf', 3600);
+        $refreshTtl   = config('tokenizer.refresh_ttl', 'P15D');
         $authorizable = $tokenizable->tokens()->make([
             'name'                       => $name,
             'platform'                   => $platform,
-            // 'access_token'               => $accessToken,
-            // 'refresh_token'              => $refreshToken,
-            // 'token_driver'               => $tokenDriver,
             'scopes'                     => $this->getScopes($scopes),
-            'access_token_expire_at'     => $this->getDateTimeAt(config('tokenizer.ttl', 7200)),
-            'refresh_token_available_at' => $this->getDateTimeAt(config('tokenizer.refresh_nbf', 7200)),
-            'refresh_token_expire_at'    => $this->getDateTimeAt(config('tokenizer.refresh_ttl', 'P15D')),
+            'access_token_expire_at'     => $this->getDateTimeAt($ttl),
+            'refresh_token_available_at' => $this->getDateTimeAt($refreshNbf),
+            'refresh_token_expire_at'    => $this->getDateTimeAt($refreshTtl),
         ]);
+        $tokenable    = $this->getTokenable()->buildTokens($authorizable, $tokenizable);
 
-        $tokenable = $this->getTokenable()->buildTokens($authorizable, $tokenizable);
-        return tap($tokenable, static function (Tokenable $tokenable) use ($authorizable, $tokenizable) {
+        return tap($tokenable, function (Tokenable $tokenable) use ($authorizable, $tokenizable) {
             if ($authorizable->fill([
                 'token_driver'  => $tokenable->getName(),
                 'access_token'  => $tokenable->getAccessToken(),
                 'refresh_token' => $tokenable->getRefreshToken(),
             ])->save()) {
-                event(new AccessTokenCreated($authorizable, $tokenizable, $tokenable));
+                event(new AccessTokenCreated($this->getGuard()->getConfig(), $authorizable, $tokenizable, $tokenable));
             }
         });
     }
@@ -122,23 +128,23 @@ class TokenizerGrant implements Grant
             return null;
         }
 
-        $authorizable->fill([
-            'access_token_expire_at'     => $this->getDateTimeAt(config('tokenizer.ttl', 7200)),
-            'refresh_token_available_at' => $this->getDateTimeAt(config('tokenizer.refresh_nbf', 7200)),
-            'refresh_token_expire_at'    => $this->getDateTimeAt(config('tokenizer.refresh_ttl', 'P15D')),
+        $ttl          = config('tokenizer.ttl', 7200);
+        $refreshNbf   = config('tokenizer.refresh_nbf', 3600);
+        $refreshTtl   = config('tokenizer.refresh_ttl', 'P15D');
+        $authorizable = $authorizable->fill([
+            'access_token_expire_at'     => $this->getDateTimeAt($ttl),
+            'refresh_token_available_at' => $this->getDateTimeAt($refreshNbf),
+            'refresh_token_expire_at'    => $this->getDateTimeAt($refreshTtl),
         ]);
-
-        $tokenable = $this->getTokenable()->buildTokens($authorizable, $tokenizable);
+        $tokenable    = $this->getTokenable()->buildTokens($authorizable, $tokenizable);
 
         return tap($tokenable, function (Tokenable $tokenable) use ($authorizable, $tokenizable) {
-            $originalAuthorizable = clone $authorizable;
-            $originalTokenizable  = clone $tokenizable;
-            $originalTokenable    = clone $tokenable;
+            $originals = array_map(fn($instance) => clone $instance, [$authorizable, $tokenizable, $tokenable]);
             if ($authorizable->fill([
                 'access_token'  => $tokenable->getAccessToken(),
                 'refresh_token' => $tokenable->getRefreshToken(),
             ])->save()) {
-                event(new AccessTokenRefreshing($originalAuthorizable, $originalTokenizable, $originalTokenable));
+                event(new AccessTokenRefreshing(...$originals));
                 event(new AccessTokenRefreshed($authorizable, $tokenizable, $tokenable));
             }
         });
@@ -202,25 +208,26 @@ class TokenizerGrant implements Grant
     }
 
     /**
-     * Get the Authorizable instance associated with this object.
+     * Get the current guard instance.
      *
-     * @return Authorizable
+     * @return SupportsTokenAuth
      */
-    public function getAuthorizable(): Authorizable
+    public function getGuard(): SupportsTokenAuth
     {
-        return $this->authorizable;
+        return $this->guard;
     }
 
     /**
-     * Set the Authorizable instance.
+     * Set the guard instance to be used.
      *
-     * @param Authorizable $authorizable
+     * @param SupportsTokenAuth $guard
      *
-     * @return static Returns the current instance for method chaining.
+     * @return static
      */
-    public function setAuthorizable(Authorizable $authorizable): static
+    public function usingGuard(SupportsTokenAuth $guard): static
     {
-        $this->authorizable = $authorizable;
+        $this->guard = $guard;
+
         return $this;
     }
 
@@ -231,7 +238,7 @@ class TokenizerGrant implements Grant
      */
     public function getTokenable(): Tokenable
     {
-        return $this->tokenable ?? $this->setTokenable($this->tokenable)->tokenable;
+        return $this->tokenable ?? $this->usingTokenable($this->tokenable)->tokenable;
     }
 
     /**
@@ -241,7 +248,7 @@ class TokenizerGrant implements Grant
      *
      * @return static
      */
-    public function setTokenable(Tokenable|string $tokenable = null): static
+    public function usingTokenable(Tokenable|string $tokenable = null): static
     {
         if (is_string($tokenable) || is_null($tokenable)) {
             $tokenable = $this->getTokenManager()->driver($tokenable);
@@ -268,9 +275,32 @@ class TokenizerGrant implements Grant
      *
      * @return static
      */
-    public function setTokenizable(Tokenizable $tokenizable): static
+    public function usingTokenizable(Tokenizable $tokenizable): static
     {
         $this->tokenizable = $tokenizable;
+        return $this;
+    }
+
+    /**
+     * Get the Authorizable instance associated with this object.
+     *
+     * @return Authorizable
+     */
+    public function getAuthorizable(): Authorizable
+    {
+        return $this->authorizable;
+    }
+
+    /**
+     * Set the Authorizable instance.
+     *
+     * @param Authorizable $authorizable
+     *
+     * @return static Returns the current instance for method chaining.
+     */
+    public function setAuthorizable(Authorizable $authorizable): static
+    {
+        $this->authorizable = $authorizable;
         return $this;
     }
 
@@ -340,29 +370,6 @@ class TokenizerGrant implements Grant
     public function setWhitelist(Whitelist $whitelist): static
     {
         $this->whitelist = $whitelist;
-        return $this;
-    }
-
-    /**
-     * Get the current HTTP request instance.
-     *
-     * @return Request
-     */
-    public function getRequest(): Request
-    {
-        return $this->request;
-    }
-
-    /**
-     * Set the current HTTP request instance.
-     *
-     * @param Request $request
-     *
-     * @return static Returns the current instance for method chaining.
-     */
-    public function setRequest(Request $request): static
-    {
-        $this->request = $request;
         return $this;
     }
 }
