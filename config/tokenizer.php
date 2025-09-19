@@ -95,7 +95,7 @@ return [
     |
     */
 
-    'refresh_nbf' => env('TOKEN_REFRESH_NBF', 7200),
+    'refresh_nbf' => env('TOKEN_REFRESH_NBF', 3600),
 
     /*
     |--------------------------------------------------------------------------
