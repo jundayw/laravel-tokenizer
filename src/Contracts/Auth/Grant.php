@@ -54,38 +54,6 @@ interface Grant
     public function getToken(): ?string;
 
     /**
-     * Check if blacklist functionality is enabled.
-     *
-     * @return bool True if blacklist is enabled, false otherwise.
-     */
-    public function isBlacklistEnabled(): bool;
-
-    /**
-     * Enable or disable blacklist functionality.
-     *
-     * @param bool $blacklistEnabled
-     *
-     * @return static Returns the current instance for method chaining.
-     */
-    public function setBlacklistEnabled(bool $blacklistEnabled): static;
-
-    /**
-     * Check if whitelist functionality is enabled.
-     *
-     * @return bool True if whitelist is enabled, false otherwise.
-     */
-    public function isWhitelistEnabled(): bool;
-
-    /**
-     * Enable or disable whitelist functionality.
-     *
-     * @param bool $whitelistEnabled
-     *
-     * @return static Returns the current instance for method chaining.
-     */
-    public function setWhitelistEnabled(bool $whitelistEnabled): static;
-
-    /**
      * Get the Authorizable instance associated with this object.
      *
      * @return Authorizable
@@ -111,11 +79,11 @@ interface Grant
     /**
      * Set the Tokenable instance.
      *
-     * @param Tokenable $tokenable
+     * @param Tokenable|string|null $tokenable
      *
      * @return static
      */
-    public function setTokenable(Tokenable $tokenable): static;
+    public function setTokenable(Tokenable|string $tokenable = null): static;
 
     /**
      * Get the Tokenizable instance.

@@ -40,20 +40,6 @@ class TokenizerGrant implements Grant
      */
     public ?Tokenizable $tokenizable = null;
 
-    /**
-     * The blacklist flag.
-     *
-     * @var bool
-     */
-    protected bool $blacklistEnabled = false;
-
-    /**
-     * The whitelist flag.
-     *
-     * @var bool
-     */
-    protected bool $whitelistEnabled = false;
-
     public function __construct(
         protected Authorizable $authorizable,
         protected TokenManager $tokenManager,
@@ -93,13 +79,13 @@ class TokenizerGrant implements Grant
 
         $tokenable = $this->getTokenable()->buildTokens($authorizable, $tokenizable);
         return tap($tokenable, static function (Tokenable $tokenable) use ($authorizable, $tokenizable) {
-            $authorizable->fill([
+            if ($authorizable->fill([
                 'token_driver'  => $tokenable->getName(),
                 'access_token'  => $tokenable->getAccessToken(),
                 'refresh_token' => $tokenable->getRefreshToken(),
-            ])->save();
-
-            event(new AccessTokenCreated($authorizable, $tokenizable, $tokenable));
+            ])->save()) {
+                event(new AccessTokenCreated($authorizable, $tokenizable, $tokenable));
+            }
         });
     }
 
@@ -143,16 +129,18 @@ class TokenizerGrant implements Grant
         ]);
 
         $tokenable = $this->getTokenable()->buildTokens($authorizable, $tokenizable);
-        
-        return tap($tokenable, function (Tokenable $tokenable) use ($authorizable, $tokenizable) {
-            event(new AccessTokenRefreshing($authorizable, $tokenizable, $tokenable));
 
-            $authorizable->fill([
+        return tap($tokenable, function (Tokenable $tokenable) use ($authorizable, $tokenizable) {
+            $originalAuthorizable = clone $authorizable;
+            $originalTokenizable  = clone $tokenizable;
+            $originalTokenable    = clone $tokenable;
+            if ($authorizable->fill([
                 'access_token'  => $tokenable->getAccessToken(),
                 'refresh_token' => $tokenable->getRefreshToken(),
-            ])->save();
-
-            event(new AccessTokenRefreshed($authorizable, $tokenizable, $tokenable));
+            ])->save()) {
+                event(new AccessTokenRefreshing($originalAuthorizable, $originalTokenizable, $originalTokenable));
+                event(new AccessTokenRefreshed($authorizable, $tokenizable, $tokenable));
+            }
         });
     }
 
@@ -214,52 +202,6 @@ class TokenizerGrant implements Grant
     }
 
     /**
-     * Check if blacklist functionality is enabled.
-     *
-     * @return bool True if blacklist is enabled, false otherwise.
-     */
-    public function isBlacklistEnabled(): bool
-    {
-        return $this->blacklistEnabled;
-    }
-
-    /**
-     * Enable or disable blacklist functionality.
-     *
-     * @param bool $blacklistEnabled
-     *
-     * @return static Returns the current instance for method chaining.
-     */
-    public function setBlacklistEnabled(bool $blacklistEnabled): static
-    {
-        $this->blacklistEnabled = $blacklistEnabled;
-        return $this;
-    }
-
-    /**
-     * Check if whitelist functionality is enabled.
-     *
-     * @return bool True if whitelist is enabled, false otherwise.
-     */
-    public function isWhitelistEnabled(): bool
-    {
-        return $this->whitelistEnabled;
-    }
-
-    /**
-     * Enable or disable whitelist functionality.
-     *
-     * @param bool $whitelistEnabled
-     *
-     * @return static Returns the current instance for method chaining.
-     */
-    public function setWhitelistEnabled(bool $whitelistEnabled): static
-    {
-        $this->whitelistEnabled = $whitelistEnabled;
-        return $this;
-    }
-
-    /**
      * Get the Authorizable instance associated with this object.
      *
      * @return Authorizable
@@ -289,18 +231,22 @@ class TokenizerGrant implements Grant
      */
     public function getTokenable(): Tokenable
     {
-        return $this->tokenable ?? $this->getTokenManager()->driver();
+        return $this->tokenable ?? $this->setTokenable($this->tokenable)->tokenable;
     }
 
     /**
      * Set the Tokenable instance.
      *
-     * @param Tokenable $tokenable
+     * @param Tokenable|string|null $tokenable
      *
      * @return static
      */
-    public function setTokenable(Tokenable $tokenable): static
+    public function setTokenable(Tokenable|string $tokenable = null): static
     {
+        if (is_string($tokenable) || is_null($tokenable)) {
+            $tokenable = $this->getTokenManager()->driver($tokenable);
+        }
+
         $this->tokenable = $tokenable;
         return $this;
     }
