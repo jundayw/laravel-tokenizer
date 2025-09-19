@@ -6,7 +6,7 @@ use Jundayw\Tokenizer\Contracts\Authorizable;
 use Jundayw\Tokenizer\Contracts\Tokenable;
 use Jundayw\Tokenizer\Contracts\Tokenizable;
 
-class RefreshTokenCreated
+class AccessTokenEvent
 {
     /**
      * Create a new event instance.

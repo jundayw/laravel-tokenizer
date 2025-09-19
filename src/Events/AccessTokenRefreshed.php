@@ -2,7 +2,8 @@
 
 namespace Jundayw\Tokenizer\Events;
 
-class AccessTokenRevoked extends AccessTokenEvent
+class AccessTokenRefreshed extends AccessTokenEvent
 {
     //
 }
+

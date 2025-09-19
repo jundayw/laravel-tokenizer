@@ -14,7 +14,7 @@ use Jundayw\Tokenizer\Contracts\Tokenizable;
 use Jundayw\Tokenizer\Contracts\Whitelist;
 use Jundayw\Tokenizer\Events\AccessTokenCreated;
 use Jundayw\Tokenizer\Events\AccessTokenRevoked;
-use Jundayw\Tokenizer\Events\RefreshTokenCreated;
+use Jundayw\Tokenizer\Events\AccessTokenRefreshed;
 
 class TokenizerGrant implements Grant
 {
@@ -148,7 +148,7 @@ class TokenizerGrant implements Grant
                 'refresh_token' => $tokenable->getRefreshToken(),
             ])->save();
 
-            event(new RefreshTokenCreated($authorizable, $tokenizable, $tokenable));
+            event(new AccessTokenRefreshed($authorizable, $tokenizable, $tokenable));
         });
     }
 

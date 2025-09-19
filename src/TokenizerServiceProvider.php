@@ -13,7 +13,9 @@ use Jundayw\Tokenizer\Contracts\Auth\Grant;
 use Jundayw\Tokenizer\Contracts\Authorizable;
 use Jundayw\Tokenizer\Contracts\Blacklist;
 use Jundayw\Tokenizer\Contracts\Whitelist;
-use Jundayw\Tokenizer\Events\TokenAuthenticated;
+use Jundayw\Tokenizer\Events\AccessTokenCreated;
+use Jundayw\Tokenizer\Events\AccessTokenRevoked;
+use Jundayw\Tokenizer\Events\AccessTokenRefreshed;
 use Jundayw\Tokenizer\Guards\TokenizerGuard;
 use Jundayw\Tokenizer\Middleware\CheckForAnyScope;
 use Jundayw\Tokenizer\Middleware\CheckScopes;
@@ -293,6 +295,8 @@ class TokenizerServiceProvider extends ServiceProvider
      */
     protected function registerListeners(): void
     {
-        Event::listen(TokenAuthenticated::class, Listeners\TokenAuthenticated::class);
+        Event::listen(AccessTokenCreated::class, Listeners\AccessTokenCreated::class);
+        Event::listen(AccessTokenRevoked::class, Listeners\AccessTokenRevoked::class);
+        Event::listen(AccessTokenRefreshed::class, Listeners\RefreshTokenCreated::class);
     }
 }

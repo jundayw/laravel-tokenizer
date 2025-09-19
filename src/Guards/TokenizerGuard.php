@@ -17,7 +17,6 @@ use Jundayw\Tokenizer\Contracts\Auth\Grant;
 use Jundayw\Tokenizer\Contracts\Auth\SupportsTokenAuth;
 use Jundayw\Tokenizer\Contracts\Tokenable;
 use Jundayw\Tokenizer\Contracts\Tokenizable;
-use Jundayw\Tokenizer\Events\TokenAuthenticated;
 
 class TokenizerGuard implements Guard, SupportsTokenAuth
 {
@@ -150,7 +149,6 @@ class TokenizerGuard implements Guard, SupportsTokenAuth
      */
     protected function fireAuthenticatedEvent(Authenticatable $user): void
     {
-        event(new TokenAuthenticated($this->getAuthorizable(), $user, $this->getTokenable()));
         event(new Authenticated($this->name, $user));
     }
 
