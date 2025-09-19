@@ -14,6 +14,7 @@ use Jundayw\Tokenizer\Contracts\Authorizable;
 use Jundayw\Tokenizer\Contracts\Blacklist;
 use Jundayw\Tokenizer\Contracts\Whitelist;
 use Jundayw\Tokenizer\Events\AccessTokenCreated;
+use Jundayw\Tokenizer\Events\AccessTokenRefreshing;
 use Jundayw\Tokenizer\Events\AccessTokenRevoked;
 use Jundayw\Tokenizer\Events\AccessTokenRefreshed;
 use Jundayw\Tokenizer\Guards\TokenizerGuard;
@@ -130,10 +131,18 @@ class TokenizerServiceProvider extends ServiceProvider
         ]);
 
         $this->app->singleton(Blacklist::class, static function ($app) {
-            return new BlacklistRepository($app['cache']->store('blacklist')->getStore());
+            return with($app['cache']->store('blacklist')->getStore(), static function ($store) {
+                return tap(new BlacklistRepository($store), static function (Blacklist $blacklist) {
+                    $blacklist->setBlacklistEnabled(config('tokenizer.cache.blacklist_enabled', false));
+                });
+            });
         });
         $this->app->singleton(Whitelist::class, static function ($app) {
-            return new WhitelistRepository($app['cache']->store('whitelist')->getStore());
+            return with($app['cache']->store('whitelist')->getStore(), static function ($store) {
+                return tap(new WhitelistRepository($store), static function (Whitelist $whitelist) {
+                    $whitelist->setWhitelistEnabled(config('tokenizer.cache.whitelist_enabled', false));
+                });
+            });
         });
     }
 
@@ -152,9 +161,6 @@ class TokenizerServiceProvider extends ServiceProvider
                 $app[Whitelist::class],
                 $app['request'],
             ), static function (Grant $grant) use ($app) {
-                $grant
-                    ->setBlacklistEnabled(config('tokenizer.cache.blacklist_enabled', false))
-                    ->setWhitelistEnabled(config('tokenizer.cache.whitelist_enabled', false));
                 $app->refresh('request', $grant, 'setRequest');
             });
         });
@@ -295,8 +301,11 @@ class TokenizerServiceProvider extends ServiceProvider
      */
     protected function registerListeners(): void
     {
-        Event::listen(AccessTokenCreated::class, Listeners\AccessTokenCreated::class);
-        Event::listen(AccessTokenRevoked::class, Listeners\AccessTokenRevoked::class);
-        Event::listen(AccessTokenRefreshed::class, Listeners\RefreshTokenCreated::class);
+        Event::listen(AccessTokenCreated::class, Listeners\AddTokenToWhitelist::class);
+        Event::listen(AccessTokenRevoked::class, Listeners\RemoveTokenFromWhitelist::class);
+        Event::listen(AccessTokenRevoked::class, Listeners\AddTokenToBlacklist::class);
+        Event::listen(AccessTokenRefreshing::class, Listeners\RemoveTokenFromWhitelist::class);
+        Event::listen(AccessTokenRefreshing::class, Listeners\AddTokenToBlacklist::class);
+        Event::listen(AccessTokenRefreshed::class, Listeners\AddTokenToWhitelist::class);
     }
 }
