@@ -24,7 +24,7 @@ class HashHmacToken extends Token
      *
      * @return string
      */
-    public function generateAccessToken(Authorizable $authorizable, Tokenizable $tokenizable): string
+    protected function generateAccessToken(Authorizable $authorizable, Tokenizable $tokenizable): string
     {
         return hash_hmac($this->getConfig()->get('algo'), json_encode([
             'jti' => $this->ulid(),
@@ -45,7 +45,7 @@ class HashHmacToken extends Token
      *
      * @return string
      */
-    public function generateRefreshToken(Authorizable $authorizable, Tokenizable $tokenizable): string
+    protected function generateRefreshToken(Authorizable $authorizable, Tokenizable $tokenizable): string
     {
         return hash_hmac($this->getConfig()->get('algo'), json_encode([
             'jti' => $this->ulid(),

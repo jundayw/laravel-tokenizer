@@ -4,14 +4,12 @@ namespace Jundayw\Tokenizer\Tokens;
 
 use Closure;
 use Illuminate\Contracts\Config\Repository;
-use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Jundayw\Tokenizer\Contracts\Authorizable;
 use Jundayw\Tokenizer\Contracts\Tokenable;
 use Jundayw\Tokenizer\Contracts\Tokenizable;
 use Jundayw\Tokenizer\Tokenizer;
 use Symfony\Component\HttpFoundation\Cookie;
-use Symfony\Component\HttpFoundation\Response;
 
 abstract class Token implements Tokenable
 {
@@ -133,6 +131,30 @@ abstract class Token implements Tokenable
     }
 
     /**
+     * Generate a new access token.
+     *
+     * This token is typically short-lived and is used to authenticate API requests.
+     *
+     * @param Authorizable $authorizable
+     * @param Tokenizable  $tokenizable
+     *
+     * @return string
+     */
+    abstract protected function generateAccessToken(Authorizable $authorizable, Tokenizable $tokenizable): string;
+
+    /**
+     * Generate a new refresh token.
+     *
+     * Refresh tokens are long-lived and used to obtain new access tokens.
+     *
+     * @param Authorizable $authorizable
+     * @param Tokenizable  $tokenizable
+     *
+     * @return string
+     */
+    abstract protected function generateRefreshToken(Authorizable $authorizable, Tokenizable $tokenizable): string;
+
+    /**
      * Generate a unique access token for the given authorizable and tokenizable.
      *
      * @param Authorizable $authorizable
@@ -193,6 +215,26 @@ abstract class Token implements Tokenable
     }
 
     /**
+     * Create a new cookie token.
+     *
+     * @return Cookie
+     */
+    public function getCookie(): Cookie
+    {
+        return new Cookie(
+            name: Tokenizer::cookie(),
+            value: $this->toJson(),
+            expire: $this->getExpiresIn(),
+            path: config('session.path'),
+            domain: config('session.domain'),
+            secure: config('session.secure'),
+            httpOnly: true,
+            raw: false,
+            sameSite: config('session.same_site') ?? null
+        );
+    }
+
+    /**
      * Determine the token type for the current driver.
      *
      * If the driver name matches the default driver defined in the
@@ -214,6 +256,7 @@ abstract class Token implements Tokenable
      *
      * @return array
      */
+    #[\Override]
     public function toArray(): array
     {
         if (is_callable($tokenable = Tokenizer::tokenable())) {
@@ -235,30 +278,20 @@ abstract class Token implements Tokenable
      *
      * @return string
      */
+    #[\Override]
     public function toJson($options = 0): string
     {
         return json_encode($this->toArray(), $options);
     }
 
     /**
-     * Create an HTTP response that represents the object.
+     * Get the evaluated contents of the object.
      *
-     * @param Request $request
-     *
-     * @return Response
+     * @return string
      */
-    public function toResponse($request): Response
+    #[\Override]
+    public function render(): string
     {
-        return response($this->toArray())->withCookie(new Cookie(
-            name: Tokenizer::cookie(),
-            value: $this->toJson(),
-            expire: $this->getExpiresIn(),
-            path: config('session.path'),
-            domain: config('session.domain'),
-            secure: config('session.secure'),
-            httpOnly: true,
-            raw: false,
-            sameSite: config('session.same_site') ?? null
-        ));
+        return $this->toJson();
     }
 }

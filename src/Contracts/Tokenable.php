@@ -5,9 +5,10 @@ namespace Jundayw\Tokenizer\Contracts;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Support\Jsonable;
-use Illuminate\Contracts\Support\Responsable;
+use Illuminate\Contracts\Support\Renderable;
+use Symfony\Component\HttpFoundation\Cookie;
 
-interface Tokenable extends Arrayable, Jsonable, Responsable
+interface Tokenable extends Arrayable, Jsonable, Renderable
 {
     /**
      * Get the name of the instance.
@@ -49,30 +50,6 @@ interface Tokenable extends Arrayable, Jsonable, Responsable
      * @return bool
      */
     public function validate(string $token): bool;
-
-    /**
-     * Generate a new access token.
-     *
-     * This token is typically short-lived and is used to authenticate API requests.
-     *
-     * @param Authorizable $authorizable
-     * @param Tokenizable  $tokenizable
-     *
-     * @return string
-     */
-    public function generateAccessToken(Authorizable $authorizable, Tokenizable $tokenizable): string;
-
-    /**
-     * Generate a new refresh token.
-     *
-     * Refresh tokens are long-lived and used to obtain new access tokens.
-     *
-     * @param Authorizable $authorizable
-     * @param Tokenizable  $tokenizable
-     *
-     * @return string
-     */
-    public function generateRefreshToken(Authorizable $authorizable, Tokenizable $tokenizable): string;
 
     /**
      * Get the current access token value.
@@ -132,4 +109,11 @@ interface Tokenable extends Arrayable, Jsonable, Responsable
      * @return string
      */
     public function ulid(): string;
+
+    /**
+     * Create a new cookie token.
+     *
+     * @return Cookie
+     */
+    public function getCookie(): Cookie;
 }

@@ -33,7 +33,7 @@ class JsonWebToken extends Token
      *
      * @return string
      */
-    public function generateAccessToken(Authorizable $authorizable, Tokenizable $tokenizable): string
+    protected function generateAccessToken(Authorizable $authorizable, Tokenizable $tokenizable): string
     {
         $claims  = $tokenizable->getJWTCustomClaims();
         $payload = $claims + [
@@ -58,7 +58,7 @@ class JsonWebToken extends Token
      *
      * @return string
      */
-    public function generateRefreshToken(Authorizable $authorizable, Tokenizable $tokenizable): string
+    protected function generateRefreshToken(Authorizable $authorizable, Tokenizable $tokenizable): string
     {
         $claims  = $tokenizable->getJWTCustomClaims();
         $payload = $claims + [
