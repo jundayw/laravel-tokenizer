@@ -3,12 +3,9 @@
 namespace Jundayw\Tokenizer\Listeners;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\SerializesModels;
 
 abstract class ShouldQueueable implements ShouldQueue
 {
-    use SerializesModels;
-
     /**
      * Get the name of the listener's queue connection.
      *
