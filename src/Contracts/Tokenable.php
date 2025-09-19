@@ -5,10 +5,9 @@ namespace Jundayw\Tokenizer\Contracts;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Support\Jsonable;
-use Illuminate\Contracts\Support\Renderable;
 use Symfony\Component\HttpFoundation\Cookie;
 
-interface Tokenable extends Arrayable, Jsonable, Renderable
+interface Tokenable extends Arrayable, Jsonable
 {
     /**
      * Get the name of the instance.
@@ -116,4 +115,13 @@ interface Tokenable extends Arrayable, Jsonable, Renderable
      * @return Cookie
      */
     public function getCookie(): Cookie;
+
+    /**
+     * Add a cookie to the response.
+     *
+     * @param Cookie|null $cookie
+     *
+     * @return static
+     */
+    public function withCookie(Cookie $cookie = null): static;
 }

@@ -4,6 +4,7 @@ namespace Jundayw\Tokenizer\Tokens;
 
 use Closure;
 use Illuminate\Contracts\Config\Repository;
+use Illuminate\Support\Facades\Cookie as CookieJar;
 use Illuminate\Support\Str;
 use Jundayw\Tokenizer\Contracts\Authorizable;
 use Jundayw\Tokenizer\Contracts\Tokenable;
@@ -235,6 +236,19 @@ abstract class Token implements Tokenable
     }
 
     /**
+     * Add a cookie to the response.
+     *
+     * @param Cookie|null $cookie
+     *
+     * @return static
+     */
+    public function withCookie(Cookie $cookie = null): static
+    {
+        app('cookie')->queue($cookie ?? $this->getCookie());
+        return $this;
+    }
+
+    /**
      * Determine the token type for the current driver.
      *
      * If the driver name matches the default driver defined in the
@@ -282,16 +296,5 @@ abstract class Token implements Tokenable
     public function toJson($options = 0): string
     {
         return json_encode($this->toArray(), $options);
-    }
-
-    /**
-     * Get the evaluated contents of the object.
-     *
-     * @return string
-     */
-    #[\Override]
-    public function render(): string
-    {
-        return $this->toJson();
     }
 }
